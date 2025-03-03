@@ -19,6 +19,26 @@ function gtaw_discord_register_settings() {
 }
 add_action('admin_init', 'gtaw_discord_register_settings');
 
+// Register store notification settings
+function gtaw_discord_register_store_notify_settings() {
+    // Basic settings
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_enabled');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_channel');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_color');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_title');
+    
+    // Fields to include
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_customer');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_email');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_total');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_payment');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_shipping');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_items');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_address');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_notes');
+}
+add_action('admin_init', 'gtaw_discord_register_store_notify_settings');
+
 // Add Discord Settings submenu under the main GTA:W Bridge menu.
 function gtaw_add_discord_settings_submenu() {
     add_submenu_page(
@@ -48,6 +68,7 @@ function gtaw_discord_settings_page_callback() {
         <h2 class="nav-tab-wrapper">
             <a href="#settings" class="nav-tab nav-tab-active">Settings</a>
           	<a href="#templates" class="nav-tab">Customer Notifications</a>
+          	<a href="#store-notifications" class="nav-tab">Store Notifications</a>
             <a href="#logs" class="nav-tab">Logs</a>
         </h2>
         <!-- Tab Content -->
@@ -214,6 +235,182 @@ function gtaw_discord_settings_page_callback() {
                 </div>
 
                 <?php submit_button('Save Templates'); ?>
+            </form>
+        </div>
+      
+        <div id="store-notifications" class="tab-content" style="display:none;">
+            <form method="post" action="options.php">
+                <?php 
+                    settings_fields('gtaw_discord_storenotify_group');
+                    do_settings_sections('gtaw_discord_storenotify_group');
+                ?>
+
+                <div class="channel-settings" style="margin-bottom: 20px; background: #f0f0f0; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h3>Store Notification Settings</h3>
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row">Enable Store Notifications</th>
+                            <td>
+                                <input type="checkbox" name="gtaw_discord_storenotify_enabled" value="1" <?php checked(get_option('gtaw_discord_storenotify_enabled', '0'), '1'); ?> />
+                                <p class="description">Receive Discord notifications when new orders are placed</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row">Store Channel ID</th>
+                            <td>
+                                <input type="text" name="gtaw_discord_storenotify_channel" value="<?php echo esc_attr(get_option('gtaw_discord_storenotify_channel', '')); ?>" size="50" />
+                                <p class="description">Enter the channel ID where store owner notifications will be sent (different from customer notifications)</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row">Embed Color</th>
+                            <td>
+                                <input type="color" name="gtaw_discord_storenotify_color" value="<?php echo esc_attr(get_option('gtaw_discord_storenotify_color', '#5865F2')); ?>" />
+                                <p class="description">Select a color for the embed sidebar</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row">Embed Title</th>
+                            <td>
+                                <input type="text" name="gtaw_discord_storenotify_title" value="<?php echo esc_attr(get_option('gtaw_discord_storenotify_title', 'New Order #[order_id]')); ?>" size="50" />
+                                <p class="description">Title format for notification embeds. You can use [order_id] shortcode.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="embed-fields" style="margin-bottom: 30px;">
+                    <h3>Embed Fields</h3>
+                    <p>Select the information to display in your new order notifications:</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_customer" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_customer', '1'), '1'); ?> />
+                                Customer Name
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_phone" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_phone', '1'), '1'); ?> />
+                                Customer Phone
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_total" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_total', '1'), '1'); ?> />
+                                Order Total
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_payment" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_payment', '1'), '1'); ?> />
+                                Payment Method
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_shipping" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_shipping', '1'), '1'); ?> />
+                                Shipping Method
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_items" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_items', '1'), '1'); ?> />
+                                Order Items (with quantities)
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_address" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_address', '0'), '1'); ?> />
+                                Shipping Address
+                            </label>
+                        </div>
+                        <div class="field-option">
+                            <label>
+                                <input type="checkbox" name="gtaw_discord_storenotify_field_notes" value="1" <?php checked(get_option('gtaw_discord_storenotify_field_notes', '1'), '1'); ?> />
+                                Customer Notes
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-preview" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                    <h3>Preview</h3>
+                    <p>This is how your notifications will appear in Discord (approximate):</p>
+
+                    <div class="discord-embed-preview" style="border-left: 4px solid <?php echo esc_attr(get_option('gtaw_discord_storenotify_color', '#5865F2')); ?>; background: #36393f; color: #fff; padding: 8px 15px; border-radius: 0 3px 3px 0; max-width: 500px; font-family: sans-serif;">
+                        <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">
+                            <?php echo esc_html(str_replace('[order_id]', '12345', get_option('gtaw_discord_storenotify_title', 'New Order #[order_id]'))); ?>
+                        </div>
+                        <div style="color: #dcddde; margin-bottom: 10px;">
+                            A new order has been placed on your store.
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px;">
+                            <?php if (get_option('gtaw_discord_storenotify_field_customer', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Customer</div>
+                                <div>John Doe</div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (get_option('gtaw_discord_storenotify_field_phone', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Phone</div>
+                                <div>555-0123</div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (get_option('gtaw_discord_storenotify_field_total', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Total</div>
+                                <div>$129 USD</div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (get_option('gtaw_discord_storenotify_field_payment', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Payment</div>
+                                <div>Fleeca Bank</div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (get_option('gtaw_discord_storenotify_field_shipping', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Shipping</div>
+                                <div>Postal Express</div>
+                            </div>
+                            <?php endif; ?>
+                          
+                            <?php if (get_option('gtaw_discord_storenotify_field_address', '1') == '1'): ?>
+                            <div style="margin-bottom: 6px;">
+                                <div style="font-weight: bold; color: #dcddde;">Shipping Address</div>
+                                <div>123 Vinewood Hills Dr, Los Santos</div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if (get_option('gtaw_discord_storenotify_field_items', '1') == '1'): ?>
+                        <div style="margin-top: 10px; font-size: 14px;">
+                            <div style="font-weight: bold; color: #dcddde; margin-bottom: 4px;">Items</div>
+                            <div>Premium Widget × 2<br>Deluxe Gadget × 1</div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (get_option('gtaw_discord_storenotify_field_notes', '1') == '1'): ?>
+                        <div style="margin-top: 10px; font-size: 14px;">
+                            <div style="font-weight: bold; color: #dcddde; margin-bottom: 4px;">Customer Notes</div>
+                            <div>Please leave package by the garage door.</div>
+                        </div>
+                        <?php endif; ?>
+
+                        <div style="font-size: 11px; color: #dcddde; margin-top: 8px;">
+                            Today at 12:34 PM
+                        </div>
+                    </div>
+                </div>
+
+                <?php submit_button('Save Store Notifications'); ?>
             </form>
         </div>
       
@@ -719,6 +916,22 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
     function gtaw_whitelist_discord_options($allowed_options) {
         $allowed_options['gtaw_discord_templates_group'] = array();
 
+        // Store notifications group
+        $allowed_options['gtaw_discord_storenotify_group'] = array(
+            'gtaw_discord_storenotify_enabled',
+            'gtaw_discord_storenotify_channel',
+            'gtaw_discord_storenotify_color',
+            'gtaw_discord_storenotify_title',
+            'gtaw_discord_storenotify_field_customer',
+            'gtaw_discord_storenotify_field_phone',
+            'gtaw_discord_storenotify_field_total',
+            'gtaw_discord_storenotify_field_payment',
+            'gtaw_discord_storenotify_field_shipping',
+            'gtaw_discord_storenotify_field_items',
+            'gtaw_discord_storenotify_field_address',
+            'gtaw_discord_storenotify_field_notes'
+        );
+
         // Get all WooCommerce order statuses to dynamically add all possible settings
         $statuses = wc_get_order_statuses();
         foreach ($statuses as $status_key => $status_label) {
@@ -738,4 +951,239 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
         add_filter('whitelist_options', 'gtaw_whitelist_discord_options');
     }
 
+    // Function to get clean street address
+    function gtaw_get_street_address($order) {
+        $shipping_address = $order->get_shipping_address_1();
+        $billing_address = $order->get_billing_address_1();
+
+        // Use shipping address if available, otherwise billing address
+        return !empty($shipping_address) ? $shipping_address : $billing_address;
+    }
+
+    // Function to get order items in a readable format
+    function gtaw_get_order_items_text($order) {
+        $items_text = '';
+
+        if (!$order) {
+            return 'No order data';
+        }
+
+        // Get order items directly from order data
+        $order_items = $order->get_items();
+
+        if (empty($order_items)) {
+            return 'No items in order';
+        }
+
+        foreach ($order_items as $item_id => $item) {
+            // Direct data access for maximum compatibility
+            $product_name = $item->get_data()['name'] ?? 'Unknown Product';
+            $quantity = $item->get_data()['quantity'] ?? 1;
+
+            // Add to items text
+            $items_text .= "$product_name × $quantity\n";
+        }
+
+        return !empty($items_text) ? rtrim($items_text) : 'Items data unavailable';
+    }
+
+    // Function to get shipping method name
+    function gtaw_get_shipping_method($order) {
+        // Try to get shipping method through standard function
+        $shipping_method = $order->get_shipping_method();
+
+        // If that didn't work, try direct access to shipping items
+        if (empty($shipping_method)) {
+            $shipping_items = $order->get_items('shipping');
+            $methods = [];
+
+            if (!empty($shipping_items)) {
+                foreach ($shipping_items as $shipping_item) {
+                    $method_name = $shipping_item->get_data()['name'] ?? '';
+                    if (!empty($method_name)) {
+                        $methods[] = $method_name;
+                    }
+                }
+
+                if (!empty($methods)) {
+                    $shipping_method = implode(', ', $methods);
+                }
+            }
+        }
+
+        // Default value if still empty
+        return !empty($shipping_method) ? $shipping_method : 'Local Pickup';
+    }
+
+    // Main notification function
+    function gtaw_discord_send_store_notification($order_id) {
+        // Check if store notifications are enabled
+        if (get_option('gtaw_discord_storenotify_enabled', '0') !== '1') return;
+
+        // Get the order
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            gtaw_add_log('discord', 'Error', "Failed to get order data for ID: $order_id", 'error');
+            return;
+        }
+
+        // Log the order structure for debugging
+        gtaw_add_log('discord', 'Debug', "Processing notification for Order #$order_id", 'success');
+
+        // Get Discord settings
+        $bot_token = get_option('gtaw_discord_bot_token', '');
+        $channel_id = get_option('gtaw_discord_storenotify_channel', '');
+        $color = get_option('gtaw_discord_storenotify_color', '#5865F2');
+
+        if (empty($bot_token) || empty($channel_id)) {
+            gtaw_add_log('discord', 'Error', "Discord notification failed: Missing bot token or channel ID", 'error');
+            return;
+        }
+
+        // Convert hex color to decimal (Discord uses decimal color values)
+        $color = hexdec(ltrim($color, '#'));
+
+        // Build the embed
+        $embed = [
+            'title' => str_replace('[order_id]', $order->get_order_number(), get_option('gtaw_discord_storenotify_title', 'New Order #[order_id]')),
+            'description' => 'A new order has been placed on your store.',
+            'color' => $color,
+            'fields' => [],
+            'timestamp' => date('c') // ISO 8601 format
+        ];
+
+        // Add fields based on settings
+        if (get_option('gtaw_discord_storenotify_field_customer', '1') == '1') {
+            $embed['fields'][] = [
+                'name' => 'Customer',
+                'value' => $order->get_formatted_billing_full_name(),
+                'inline' => true
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_phone', '1') == '1') {
+            $embed['fields'][] = [
+                'name' => 'Phone',
+                'value' => $order->get_billing_phone() ?: 'Not provided',
+                'inline' => true
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_total', '1') == '1') {
+            $total = $order->get_total();
+            $currency = $order->get_currency();
+            $formatted_total = '$' . number_format($total, 0) . ' ' . $currency;
+
+            $embed['fields'][] = [
+                'name' => 'Total',
+                'value' => $formatted_total,
+                'inline' => true
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_payment', '1') == '1') {
+            $embed['fields'][] = [
+                'name' => 'Payment Method',
+                'value' => $order->get_payment_method_title(),
+                'inline' => true
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_shipping', '1') == '1') {
+            $embed['fields'][] = [
+                'name' => 'Shipping Method',
+                'value' => gtaw_get_shipping_method($order),
+                'inline' => true
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_address', '0') == '1') {
+            $street_address = gtaw_get_street_address($order);
+
+            $embed['fields'][] = [
+                'name' => 'Shipping Address',
+                'value' => !empty($street_address) ? $street_address : 'No address provided',
+                'inline' => false
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_items', '1') == '1') {
+            $items_text = gtaw_get_order_items_text($order);
+
+            $embed['fields'][] = [
+                'name' => 'Items',
+                'value' => $items_text,
+                'inline' => false
+            ];
+        }
+
+        if (get_option('gtaw_discord_storenotify_field_notes', '1') == '1') {
+            $notes = $order->get_customer_note();
+
+            if (!empty($notes)) {
+                $embed['fields'][] = [
+                    'name' => 'Customer Notes',
+                    'value' => $notes,
+                    'inline' => false
+                ];
+            }
+        }
+
+        // Prepare the API request
+        $response = wp_remote_post("https://discord.com/api/v10/channels/{$channel_id}/messages", [
+            'headers' => [
+                'Authorization' => 'Bot ' . $bot_token,
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode([
+                'embeds' => [$embed]
+            ])
+        ]);
+
+        // Log the result
+        if (is_wp_error($response)) {
+            gtaw_add_log('discord', 'Error', "Failed to send store notification: " . $response->get_error_message(), 'error');
+        } else {
+            gtaw_add_log('discord', 'Notification', "Store notification sent for Order #{$order->get_order_number()}", 'success');
+        }
+    }
+
+    // Add a hook to debug order structure
+    add_action('woocommerce_new_order', 'gtaw_debug_order_structure', 10);
+    function gtaw_debug_order_structure($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+
+        // Log order items count
+        $items = $order->get_items();
+        gtaw_add_log('discord', 'Debug', "Order #$order_id has " . count($items) . " items", 'success');
+
+        // Log the raw item data for the first item
+        if (!empty($items)) {
+            $first_item = reset($items);
+            gtaw_add_log('discord', 'Debug', "First item data: " . print_r($first_item->get_data(), true), 'success');
+        }
+    }
+
+    // Send store notification only when order status changes to processing
+    function gtaw_send_store_notification_on_processing($order_id, $old_status, $new_status) {
+        // Only trigger when status changes to processing
+        if ($new_status !== 'processing') {
+            return;
+        }
+
+        // Call the existing notification function
+        gtaw_discord_send_store_notification($order_id);
+    }
+    add_action('woocommerce_order_status_changed', 'gtaw_send_store_notification_on_processing', 10, 3);
+
+    // Make phone field mandatory in WooCommerce checkout
+    function gtaw_make_phone_field_required($fields) {
+        $fields['billing']['billing_phone']['required'] = true;
+        return $fields;
+    }
+    add_filter('woocommerce_checkout_fields', 'gtaw_make_phone_field_required');
+
 }
+
+
