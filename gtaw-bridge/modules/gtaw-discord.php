@@ -73,6 +73,10 @@ function gtaw_discord_settings_page_callback() {
         'logs' => [
             'title' => 'Logs',
             'callback' => 'gtaw_discord_logs_tab'
+        ],
+        'guide' => [
+            'title' => 'Guide',
+            'callback' => 'gtaw_discord_guide_tab'
         ]
     ];
     
@@ -242,7 +246,8 @@ function gtaw_load_discord_submodules() {
         'notifications.php',
         'store-notifications.php',
         'role-mapping.php',
-        'member-card.php'
+        'member-card.php',
+		'guide.php'
     ];
     
     foreach ($submodules as $submodule) {
