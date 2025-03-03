@@ -10,11 +10,14 @@ function gtaw_discord_register_settings() {
     register_setting('gtaw_discord_settings_group', 'gtaw_discord_client_secret');
     register_setting('gtaw_discord_settings_group', 'gtaw_discord_bot_token');
   	register_setting('gtaw_discord_settings_group', 'gtaw_discord_guild_id');
-	register_setting('gtaw_discord_settings_group', 'gtaw_discord_channel_id');
   	register_setting('gtaw_discord_settings_group', 'gtaw_discord_invite_link');
   
     // Register the templates settings group
-	add_option('gtaw_discord_templates_group');
+   	add_option('gtaw_discord_templates_group');
+  
+    // Register the mandatory notifications setting
+    register_setting('gtaw_discord_templates_group', 'gtaw_discord_notifications_mandatory');
+    register_setting('gtaw_discord_templates_group', 'gtaw_discord_channel_id'); // Add this line
 
 }
 add_action('admin_init', 'gtaw_discord_register_settings');
@@ -36,6 +39,13 @@ function gtaw_discord_register_store_notify_settings() {
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_items');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_address');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_notes');
+ 
+	// Add new setting for role mention
+  	register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_role_id');
+    register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_role_enabled');
+  
+
+
 }
 add_action('admin_init', 'gtaw_discord_register_store_notify_settings');
 
@@ -136,7 +146,8 @@ function gtaw_discord_settings_page_callback() {
         <div id="templates" class="tab-content" style="display:none;">
             <form method="post" action="options.php">
                 <?php 
-                    settings_fields('gtaw_discord_templates_group');
+                    settings_fields('gtaw_discord_settings_group'); // For channel_id
+                    settings_fields('gtaw_discord_templates_group'); // For templates
                     do_settings_sections('gtaw_discord_templates_group');
                 ?>
 
@@ -148,6 +159,13 @@ function gtaw_discord_settings_page_callback() {
                             <td>
                                 <input type="text" name="gtaw_discord_channel_id" value="<?php echo esc_attr(get_option('gtaw_discord_channel_id', '')); ?>" size="50" />
                                 <p class="description">Enter the channel ID where customer order notifications will be posted.</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row">Require Discord Membership</th>
+                            <td>
+                                <input type="checkbox" name="gtaw_discord_notifications_mandatory" value="1" <?php checked(get_option('gtaw_discord_notifications_mandatory', '0'), '1'); ?> />
+                                <p class="description">If enabled, customers must join your Discord server before they can place an order. Discord notifications will be mandatory.</p>
                             </td>
                         </tr>
                     </table>
@@ -260,6 +278,14 @@ function gtaw_discord_settings_page_callback() {
                             <td>
                                 <input type="text" name="gtaw_discord_storenotify_channel" value="<?php echo esc_attr(get_option('gtaw_discord_storenotify_channel', '')); ?>" size="50" />
                                 <p class="description">Enter the channel ID where store owner notifications will be sent (different from customer notifications)</p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row">Mention Role</th>
+                            <td>
+                                <input type="checkbox" name="gtaw_discord_storenotify_role_enabled" value="1" <?php checked(get_option('gtaw_discord_storenotify_role_enabled', '0'), '1'); ?> />
+                                <input type="text" name="gtaw_discord_storenotify_role_id" value="<?php echo esc_attr(get_option('gtaw_discord_storenotify_role_id', '')); ?>" placeholder="Role ID" size="20" />
+                                <p class="description">Enable to mention a role when a new order notification is sent. Enter the Discord Role ID.</p>
                             </td>
                         </tr>
                         <tr valign="top">
@@ -708,6 +734,7 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
         $discord_id = get_user_meta($user_id, 'discord_ID', true);
         $guild_id = get_option('gtaw_discord_guild_id', '');
         $is_in_server = false;
+      	$is_mandatory = get_option('gtaw_discord_notifications_mandatory', '0') == '1';
 
         if ($discord_id) {
             // Force a fresh check on checkout page load
@@ -717,19 +744,25 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
         <div id="gtaw-discord-notifications">
 
           	<h3>Discord Notifications</h3>
-            <p>Would you like to receive order status updates on Discord?</p>
-            <div class="gtaw-discord-options">
-                <label><input type="radio" name="gtaw_discord_notify" value="yes" checked> Yes, notify me</label>
-                <label><input type="radio" name="gtaw_discord_notify" value="no"> No, I don't want updates</label>
-            </div>
+            <?php if ($is_mandatory): ?>
+                <p>In order to place an order, you must join our Discord server to receive order updates.</p>
+                <input type="hidden" name="gtaw_discord_notify" value="yes" />
+            <?php else: ?>
+                <p>Would you like to receive order status updates on Discord?</p>
+                <div class="gtaw-discord-options">
+                    <label><input type="radio" name="gtaw_discord_notify" value="yes" checked> Yes, notify me</label>
+                    <label><input type="radio" name="gtaw_discord_notify" value="no"> No, I don't want updates</label>
+                </div>
+            <?php endif; ?>
+            
             <?php if (!$discord_id): ?>
                 <p class="gtaw-discord-warning">
-                    <span><b>You haven't linked your Discord account!</b></span>
+                    <span><b><?php echo $is_mandatory ? 'You must link your Discord account to place an order!' : 'You haven\'t linked your Discord account!'; ?></b></span>
                     <a href="/my-account/discord/" target="_blank" rel="noopener noreferrer">Click here to link it now.</a>
                 </p>
             <?php elseif (!$is_in_server): ?>
                 <p class="gtaw-discord-warning" id="discord-server-warning">
-                    <span><b>You're not a member of our Discord server!</b></span>
+                    <span><b><?php echo $is_mandatory ? 'You must join our Discord server to place an order!' : 'You\'re not a member of our Discord server!'; ?></b></span>
                     <a href="https://discord.gg/<?php echo esc_attr(get_option('gtaw_discord_invite_link', '')); ?>" target="_blank" rel="noopener noreferrer">Join our server to receive notifications</a>
                     <button type="button" id="check-discord-membership" class="button" style="margin-left: 10px;">I've joined - Verify</button>
                 </p>
@@ -802,6 +835,37 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
         }
     }
     add_action('woocommerce_checkout_update_order_meta', 'gtaw_save_discord_checkout_field');
+  
+    // Add checkout validation
+    function gtaw_validate_discord_checkout() {
+        $is_mandatory = get_option('gtaw_discord_notifications_mandatory', '0') == '1';
+        $wants_notifications = isset($_POST['gtaw_discord_notify']) && $_POST['gtaw_discord_notify'] === 'yes';
+
+        // If notifications are mandatory or user wants them, check Discord status
+        if ($is_mandatory || $wants_notifications) {
+            $user_id = get_current_user_id();
+            $discord_id = get_user_meta($user_id, 'discord_ID', true);
+
+            // Check if Discord account is linked
+            if (empty($discord_id)) {
+                $message = $is_mandatory 
+                    ? 'You must link your Discord account to place an order.' 
+                    : 'You must link your Discord account to receive notifications or deselect Discord notifications.';
+                wc_add_notice($message, 'error');
+                return;
+            }
+
+            // Check if user is in the Discord server
+            $is_in_server = gtaw_is_user_in_discord_server($discord_id, true);
+            if (!$is_in_server) {
+                $message = $is_mandatory 
+                    ? 'You must join our Discord server to place an order.' 
+                    : 'You must join our Discord server to receive notifications or deselect Discord notifications.';
+                wc_add_notice($message, 'error');
+            }
+        }
+    }
+    add_action('woocommerce_checkout_process', 'gtaw_validate_discord_checkout');
   
     // Display Discord notification opt-in on order details page
     function gtaw_display_discord_notification_order($order) {
@@ -1043,7 +1107,13 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
         // Convert hex color to decimal (Discord uses decimal color values)
         $color = hexdec(ltrim($color, '#'));
 
-        // Build the embed
+        $message_content = '';
+        if (get_option('gtaw_discord_storenotify_role_enabled', '0') == '1' && !empty(get_option('gtaw_discord_storenotify_role_id', ''))) {
+            $role_id = get_option('gtaw_discord_storenotify_role_id', '');
+            $message_content = '<@&' . $role_id . '>';
+        }
+
+      	// Build the embed
         $embed = [
             'title' => str_replace('[order_id]', $order->get_order_number(), get_option('gtaw_discord_storenotify_title', 'New Order #[order_id]')),
             'description' => 'A new order has been placed on your store.',
@@ -1136,6 +1206,7 @@ if ( get_option('gtaw_discord_enabled', 0) == 1 ) {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
+              	'content' => $message_content,
                 'embeds' => [$embed]
             ])
         ]);
