@@ -1,99 +1,118 @@
 # GTAW WordPress Bridge Plugin
-The GTA:W Bridge plugin integrates GTA:W OAuth authentication with WordPress, allowing GTA:W users to create character-based WordPress accounts. Each character the user selects from the GTA:W API becomes its own WP account, and returning users can choose which character account to log in as.
 
-Demo available here: https://vommoda.com/
+The GTAW WordPress Bridge Plugin integrates GTA:W OAuth authentication with WordPress, allowing GTA:W users to create character-based WordPress accounts. Now built with a modular architecture, the plugin’s core file remains lean while additional functionalities (such as OAuth and Discord integration) are encapsulated in separate module files. This design makes it easy to extend and maintain the plugin without altering the core.
+
+Demo available here: [https://vommoda.com/](https://vommoda.com/)
+
+## Plugin Structure
+
+The plugin is organized into distinct folders and modules:
+
+```
+GTAW-Bridge/
++- gtaw-bridge.php            // Main plugin file: loads core functionality, registers assets, checks dependencies, and auto-loads modules.
++- modules/
+¦  +- gtaw-oauth.php          // Handles GTA:W OAuth authentication and account management.
+¦  +- gtaw-discord.php        // Manages Discord integration for linking/unlinking Discord accounts with WooCommerce accounts.
++- assets/
+¦  +- css/
+¦  ¦  +- gtaw-style.css       // Plugin styles.
+¦  +- js/
+¦     +- gtaw-script.js       // Plugin scripts.
+```
 
 ## Installation
 
-#### Upload and Activate the Plugin
-- [Download the plugin](https://github.com/Botticena/gtaw-bridge/releases/latest) ZIP file.
-- In your WordPress admin dashboard, navigate to Plugins > Add New.
-- Click Upload Plugin, choose the ZIP file, and then click Install Now.
-- Once installed, click Activate.
+### Upload and Activate the Plugin
 
-#### Verify Dependencies
-- Make sure WooCommerce is installed and activated. If it isn’t, the plugin will display an admin notice.
+1. [Download the latest ZIP file](https://github.com/Botticena/gtaw-bridge/releases/latest).
+2. In your WordPress admin dashboard, go to **Plugins > Add New**.
+3. Click **Upload Plugin**, select the ZIP file, and then click **Install Now**.
+4. Once installed, click **Activate**.
+
+### Verify Dependencies
+
+- **WooCommerce:** Ensure that WooCommerce is installed and activated. If not, the plugin will display an admin notice.
 
 ## Configuration
-After activation, you’ll need to configure the plugin settings.
 
-### GTA:W oAuth Settings
+After activation, configure the plugin settings for each module via the GTAW Bridge menu in your admin dashboard.
 
-#### Access the Settings Page
-- In the WordPress admin sidebar, you should now see a top-level menu item called GTA:W Bridge. Click on it.
+### GTA:W OAuth Settings (gtaw-oauth Module)
 
-#### GTA:W oAuth Tab
-The settings page displays three tabs at the top:
-- GTA:W oAuth
-- Fleeca API (Coming Soon)
-- Discord Sync (Coming Soon)
+1. Click on **GTA:W Bridge** in the WordPress sidebar.
+2. Select the **GTA:W OAuth** tab.
+3. Fill in the following fields:
+   - **OAuth Client ID:** Your GTA:W Client ID from the [GTA:W UCP Developers section](https://ucp.gta.world/developers/oauth).
+   - **OAuth Client Secret:** Your GTA:W Client Secret.
+   - **OAuth Callback/Redirect URL:** Auto-generated (e.g., `https://yoursite.com/?gta_oauth=callback`). Ensure that this matches the URL set in your GTA:W UCP Developers section.
+4. Click **Save Changes**.
 
-![Settings Page](https://i.imgur.com/SAxIz4F.png)
+### Discord Settings (gtaw-discord Module)
 
-In the GTA:W oAuth tab, you’ll see the following fields:
-- OAuth Client ID: Enter your GTA:W Client ID from the [GTA:W UCP Developers section](https://ucp.gta.world/developers/oauth).
-- OAuth Client Secret: Enter your GTA:W Client Secret from the GTA:W UCP Developers section.
-- OAuth Callback/Redirect URL: This field is auto-generated (e.g., https://yoursite.com/?gta_oauth=callback). Ensure that the callback URL configured in your GTA:W UCP Developers section matches this URL.
+1. In the **GTA:W Bridge** menu, select the **Discord Settings** tab.
+2. Enable the Discord module by checking the "Activate Discord Module" checkbox.
+3. Enter your Discord credentials:
+   - **Discord Client ID**
+   - **Discord Client Secret**
+   - **Discord Bot Token**
+4. The **Discord OAuth Redirect URI** is auto-generated (e.g., `https://yoursite.com/?discord_oauth=callback`). Configure this URI in your Discord Developer Portal.
+5. Click **Save Changes**.
 
-After filling in these fields, click the Save Changes button.
+## Modular Architecture
 
-#### Future Settings Tabs
-The Fleeca API and Discord Sync tabs currently display “Coming Soon.” These tabs will be updated as new features are developed.
+The modular design allows you to extend the plugin without modifying the core file:
 
-### Removing Residual Sensitive Data
-All sensitive credentials (Client ID and Secret) are stored as plugin options and are not hard-coded in the plugin files.
+- **Core File (`gtaw-bridge.php`):**  
+  - Handles basic plugin initialization, dependency checks, asset enqueuing, and module auto-loading.
+- **Modules (`modules/` folder):**  
+  - **gtaw-oauth.php:** Contains all code related to GTA:W OAuth and account creation/login.  
+  - **gtaw-discord.php:** Adds Discord integration, allowing WooCommerce users to link/unlink their Discord accounts.
+- **Assets (`assets/` folder):**  
+  - Organizes CSS and JavaScript files separately for cleaner maintenance.
+
+To add new functionality, simply create a new module file in the `modules/` folder. The core will automatically load it on activation.
 
 ## Usage
 
-### Using the OAuth Login Link
+### Using the GTA:W OAuth Login
 
-#### Embedding the Link
-You can embed the login link anywhere on your site using the shortcode: [gtaw_login]
+- **Shortcode:**  
+  Embed the login link anywhere on your site using: `[gtaw_login]`
+- **User Flow:**  
+  When users click the login link, they are redirected to the GTA:W OAuth page. After authenticating, they are redirected back to your website, and the plugin stores the GTA:W API response (user data and characters) in a cookie. Users can then choose a character to create a new account or log in.
 
-Alternatively, you can use the link directly (as generated and shown in the settings page).
-#### User Flow via GTA:W
-When a user clicks the login link, they are redirected to the GTA:W OAuth page.
+### Account Management
 
-After authenticating on GTA:W, they are redirected back to your website. The plugin saves the GTA:W API response (user data and list of characters) in a cookie.
+- **First Login:**  
+  New users are prompted via a modal to select a character from the GTA:W API response. The plugin creates a WordPress account for the chosen character.
+- **Returning Users:**  
+  Users with existing accounts can choose which connected character to log in with, or register a new character.
 
-### Account Creation – First Login
-![Account Creation](https://i.imgur.com/hqBhzoW.png)
-#### First Login Modal
-If the plugin determines that there is no existing WordPress account linked to the GTA:W user, a modal appears on the site prompting the user to select a character from the GTA:W API response. The modal displays a dropdown list of all characters. When the user selects a character and clicks Create Account & Login, the plugin:
-- Creates a new WP account using the selected character’s details.
-  - Username: Generated as (firstname)_(lastname) (all lower-case and sanitized). If the username already exists, a timestamp is appended.
-  - Email: Set as firstname.lastname@mail.sa
-  - First Name/Last Name: Set to the character’s first and last names.
-- Saves the GTA:W user ID in user meta (key: gtaw_user_id).
-- Saves the selected character as both the connected character (in gtaw_characters) and as the active character (active_gtaw_character).
-- Logs the user in using WordPress authentication cookies.
+### Discord Integration (WooCommerce)
 
-### Returning User Flow – Logging in and Switching Characters
-![Account Login](https://i.imgur.com/C5hwkbK.png)
-#### When an Account Exists
-The plugin checks for existing WP accounts using the GTA:W user ID stored in user meta.A modal appears with two sections:
-- Login with an Existing Account:
-Displays a dropdown list of accounts (each representing a connected character). Clicking Login calls an AJAX endpoint that updates the active character and logs the user in.
-
-- Register a New Character: Displays a dropdown list of GTA:W characters that are not yet connected to any WP account. Clicking Register New Account creates a new WP account for that character.
-
-#### Switching Active Character
-If a user is already logged in and wants to switch the active character, they can do so from the returning user modal. This updates both the user meta and the WP profile (first name, last name, display name, etc.) to reflect the new character. The plugin logs the user in with the updated profile.
+- **My Account Integration:**  
+  In the WooCommerce My Account area, a new **Discord Settings** endpoint is available where users can link or unlink their Discord account.
+- **Shortcode:**  
+  Use `[gtaw_discord_buttons]` to display a link for linking/unlinking a Discord account.
+- **OAuth Flow:**  
+  The Discord module uses OAuth (with the `identify` scope) to retrieve the user's Discord ID.
 
 ## Troubleshooting
-### Cookie Issues
-Ensure that your site isn’t blocking cookies, as the plugin relies on cookies (named gtaw_user_data) to store the GTA:W API response.
 
-### OAuth Callback
-If users are not being redirected back properly after logging into GTA:W, double-check that the OAuth Callback/Redirect URL in your plugin settings matches what’s configured on the GTA:W UCP Developers section.
-
-### WooCommerce Dependency
-Make sure WooCommerce is active. The plugin shows an admin notice if WooCommerce isn’t installed or activated.
-
-### Cache
-After making changes to the plugin, clear your browser cache (and any server-side cache) to ensure that the latest JavaScript and settings are loaded.
+- **Cookies:**  
+  Ensure that your site allows cookies, as the plugin uses cookies (named `gtaw_user_data`) to store API responses.
+- **OAuth Callback:**  
+  Verify that the OAuth Callback/Redirect URLs in the plugin settings match those configured in the GTA:W and Discord developer portals.
+- **WooCommerce Dependency:**  
+  Confirm that WooCommerce is active; otherwise, the plugin will notify you.
+- **Cache:**  
+  Clear your browser and server cache after making changes to ensure that the latest scripts and settings are loaded.
 
 ## Final Notes
-If you have any questions or run into any errors, feel free to contact me on GTA:W forums.
-- Contact me here: https://forum.gta.world/en/profile/56418-lena/
-- Plugin thread: https://forum.gta.world/en/topic/141314-guide-gtaw-oauth-wordpress-plugin/
+
+The modular architecture of the GTAW WordPress Bridge Plugin streamlines development and maintenance. New modules can be added without altering the core, keeping your code clean and extendable.
+
+For any questions or issues, feel free to reach out on the GTA:W forums:
+- **Contact:** [Lena on GTA:W Forums](https://forum.gta.world/en/profile/56418-lena/)
+- **Plugin Thread:** [GTA:W OAuth WordPress Plugin Guide](https://forum.gta.world/en/topic/141314-guide-gtaw-oauth-wordpress-plugin/)

@@ -1,0 +1,62 @@
+.gtaw-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    display: none;
+}
+.gtaw-modal-content {
+    background: #fff;
+    padding: 20px;
+    max-width: 500px;
+    margin: 100px auto;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#gtaw-discord-notifications {
+    margin-top: 50px;
+	margin-bottom: 50px;
+}
+
+#gtaw-discord-notifications h3 {
+    font-family: var(--secondary-ff);
+	margin-bottom: .3em;
+	font-weight: 400;
+}
+
+.gtaw-discord-options {
+    background-color: var(--checkout-bg-colors);
+    border-width: var(--checkout-border-size);
+    border-color: var(--checkout-border-color);
+    border-style: solid;
+    border-radius: var(--checkout-border-radius);
+    padding: 0;
+	border-width: var(--checkout-border-size);
+    border-color: var(--checkout-border-color);
+    border-bottom-style: solid;
+    padding: var(--checkout-box-padding);
+    padding-left: var(--checkout-box-padding-side);
+    padding-right: var(--checkout-box-padding-side);
+    display: -ms-flexbox;
+    display: flex
+    -webkit-box-align: center;
+    align-items: center;
+}
+
+.gtaw-discord-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--checked-color, HSL(var(--neutral-7)));
+    font-weight: var(--checked-fw, 600);
+}
+
+.gtaw-discord-warning {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+}
