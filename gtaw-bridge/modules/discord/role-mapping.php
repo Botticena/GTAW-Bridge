@@ -69,10 +69,16 @@ function gtaw_sync_user_discord_roles($user_id) {
     
     // Get user's Discord roles
     $discord_roles = gtaw_get_user_discord_roles($discord_id);
-    if (is_wp_error($discord_roles) || empty($discord_roles)) {
+    if (is_wp_error($discord_roles)) {
         gtaw_add_log('discord', 'Role Sync', "Failed to get Discord roles for user ID $user_id: " . 
-            (is_wp_error($discord_roles) ? $discord_roles->get_error_message() : 'No roles found'), 'error');
+            $discord_roles->get_error_message(), 'error');
         return false;
+    }
+    
+    // If we got an empty array of roles, that's okay for new users
+    // Log it but continue with the process
+    if (empty($discord_roles)) {
+        gtaw_add_log('discord', 'Role Sync', "User $user_id has no Discord roles yet. Will check role mappings.", 'success');
     }
     
     // Get role mappings
@@ -113,8 +119,26 @@ function gtaw_sync_user_discord_roles($user_id) {
         }
     }
     
-    if (empty($matched_roles)) {
-        // No matching roles found
+    // If no matched roles and user has no Discord roles yet, we'll handle this
+    // in the WordPress → Discord direction instead
+    if (empty($matched_roles) && empty($discord_roles)) {
+        gtaw_add_log('discord', 'Role Sync', "User $user_id has no Discord roles that map to WordPress roles.", 'success');
+        // If two-way sync is enabled, we'll rely on that to assign Discord roles
+        if (get_option('gtaw_discord_rolemapping_two_way_sync', '0') === '1') {
+            gtaw_add_log('discord', 'Role Sync', "Two-way sync is enabled - will check for WordPress → Discord mapping", 'success');
+            
+            // Get current WordPress role and trigger Discord sync
+            if (!empty($user->roles)) {
+                $primary_role = reset($user->roles);
+                // Trigger sync in the other direction
+                gtaw_sync_discord_roles_from_wp($user_id, $primary_role, []);
+            }
+        }
+        return false;
+    }
+    else if (empty($matched_roles)) {
+        // User has Discord roles but none match our mappings
+        gtaw_add_log('discord', 'Role Sync', "User $user_id has Discord roles but none map to WordPress roles.", 'success');
         return false;
     }
     
@@ -212,6 +236,15 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
     // Get current Discord member data including roles
     $member_data = gtaw_get_discord_member($discord_id, true);
     if (is_wp_error($member_data)) {
+        $error_code = $member_data->get_error_code();
+        
+        // If the error is just that the user has no roles yet, we can continue
+        // Discord API returns 404 if user is not in server
+        if ($error_code === 'discord_api_error' && isset($member_data->get_error_data()['status']) && $member_data->get_error_data()['status'] === 404) {
+            gtaw_add_log('discord', 'Role Sync', "User $user_id not found in Discord server, can't sync roles.", 'error');
+            return false;
+        }
+        
         gtaw_add_log('discord', 'Error', "Failed to get Discord member data: " . $member_data->get_error_message(), 'error');
         return false;
     }
@@ -234,8 +267,8 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
         $discord_roles_to_add = $wp_to_discord_mappings[$role];
     }
     
-    // Get current Discord roles
-    $current_discord_roles = $member_data['roles'] ?? [];
+    // Get current Discord roles (ensure it's an array even if empty)
+    $current_discord_roles = isset($member_data['roles']) && is_array($member_data['roles']) ? $member_data['roles'] : [];
     
     // Determine roles to remove (based on old WordPress roles that are no longer assigned)
     $discord_roles_to_remove = [];
@@ -265,7 +298,7 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
     $roles_added = array_diff($new_roles, $current_discord_roles);
     $roles_removed = array_diff($current_discord_roles, $new_roles);
     
-    // Skip if no changes needed
+    // Skip if no changes needed (no roles added and no roles removed)
     if (empty($roles_added) && empty($roles_removed)) {
         return true;
     }
@@ -277,6 +310,8 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
         return false;
     }
     
+    gtaw_add_log('discord', 'Role Sync', "Attempting to update Discord roles for user $user_id ($discord_id) with roles: " . implode(', ', $new_roles), 'success');
+
     $result = gtaw_discord_api_request(
         "guilds/{$guild_id}/members/{$discord_id}", 
         [
@@ -285,7 +320,7 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
         ],
         'PATCH'
     );
-    
+
     if (is_wp_error($result)) {
         gtaw_add_log('discord', 'Error', "Failed to update Discord roles: " . $result->get_error_message(), 'error');
         return false;
@@ -298,6 +333,41 @@ function gtaw_sync_discord_roles_from_wp($user_id, $role, $old_roles) {
     
     return true;
 }
+
+/**
+ * Immediately sync WordPress roles to Discord when account is linked
+ * This function handles the special case of a new Discord user with no roles
+ */
+function gtaw_sync_roles_on_discord_link_for_new_users($user_id, $discord_id) {
+    // Only run if role mapping and two-way sync are enabled
+    if (get_option('gtaw_discord_rolemapping_enabled', '0') !== '1' || 
+        get_option('gtaw_discord_rolemapping_two_way_sync', '0') !== '1') {
+        return;
+    }
+    
+    // Get the user's WordPress role
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return;
+    }
+    
+    // Get the user's current roles
+    $roles = $user->roles;
+    if (empty($roles)) {
+        return;
+    }
+    
+    // Get the primary role (first one in the array)
+    $primary_role = reset($roles);
+    
+    // Call the sync function with empty old_roles (we're adding fresh roles)
+    gtaw_sync_discord_roles_from_wp($user_id, $primary_role, []);
+    
+    gtaw_add_log('discord', 'Role Sync', "Triggered WordPress → Discord sync for new user $user_id with role $primary_role", 'success');
+}
+
+// Add this hook with higher priority (9) to run before the regular sync
+add_action('gtaw_discord_account_linked', 'gtaw_sync_roles_on_discord_link_for_new_users', 9, 2);
 
 /* ========= SCHEDULING & HOOKS ========= */
 
@@ -463,6 +533,21 @@ function gtaw_ajax_sync_user_discord_roles() {
             'refresh' => true
         ]);
     } else {
+        // Even if Discord → WordPress sync failed, try WordPress → Discord sync
+        $user = get_userdata($user_id);
+        if ($user && !empty($user->roles)) {
+            $primary_role = reset($user->roles);
+            $wp_to_discord_success = gtaw_sync_discord_roles_from_wp($user_id, $primary_role, []);
+            
+            if ($wp_to_discord_success) {
+                wp_send_json_success([
+                    'message' => 'Roles synced from WordPress to Discord successfully!',
+                    'refresh' => true
+                ]);
+                return;
+            }
+        }
+        
         wp_send_json_error('Failed to sync Discord roles. Check logs for details.');
     }
 }

@@ -11,44 +11,7 @@ defined('ABSPATH') or exit;
 
 /* ========= ADMIN SETTINGS ========= */
 
-// Add tab callback for OAuth settings
-function gtaw_discord_oauth_tab() {
-    $redirect_uri = site_url('?discord_oauth=callback');
-    ?>
-    <form method="post" action="options.php">
-        <?php 
-            settings_fields('gtaw_discord_settings_group');
-            do_settings_sections('gtaw_discord_settings_group');
-        ?>
-        
-        <h3>Discord OAuth Settings</h3>
-        <p>These settings control how users connect their Discord accounts to your site.</p>
-        
-        <div class="discord-oauth-config" style="margin-bottom: 20px; background: #f0f0f0; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-            <table class="form-table">
-                <tr valign="top">
-                    <th scope="row">Discord OAuth Redirect URI</th>
-                    <td>
-                        <input type="text" readonly value="<?php echo esc_url($redirect_uri); ?>" size="50" style="width:100%;" />
-                        <p class="description">This is the OAuth callback URL. Set this in your Discord Developer Portal.</p>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        
-        <?php submit_button('Save OAuth Settings'); ?>
-    </form>
-    <?php
-}
-
-// Register the OAuth tab
-add_filter('gtaw_discord_settings_tabs', function($tabs) {
-    $tabs['oauth'] = [
-        'title' => 'OAuth',
-        'callback' => 'gtaw_discord_oauth_tab'
-    ];
-    return $tabs;
-});
+// Moved to the "Settings" tab.
 
 /* ========= FRONT-END FUNCTIONALITY ========= */
 
@@ -150,15 +113,27 @@ function gtaw_handle_discord_oauth_callback() {
         if (is_user_logged_in()) {
             $user_id = get_current_user_id();
             $discord_id = sanitize_text_field($user_body['id']);
-            
+
             update_user_meta($user_id, 'discord_ID', $discord_id);
-            
+
             // Log successful linking
             $username = wp_get_current_user()->user_login;
             gtaw_add_log('discord', 'Link', "User {$username} linked their Discord account (ID: {$discord_id}).", 'success');
-            
+
             // Trigger role sync after linking Discord account
             gtaw_discord_trigger_account_linked($user_id, $discord_id);
+
+            // Additional trigger for new users with no Discord roles yet
+            // This ensures WordPress → Discord sync happens immediately
+            if (get_option('gtaw_discord_rolemapping_enabled', '0') === '1' && 
+                get_option('gtaw_discord_rolemapping_two_way_sync', '0') === '1') {
+
+                $user = get_userdata($user_id);
+                if ($user && !empty($user->roles)) {
+                    $primary_role = reset($user->roles);
+                    gtaw_sync_discord_roles_from_wp($user_id, $primary_role, []);
+                }
+            }
         }
         
         // Redirect back to the WooCommerce My Account Discord page

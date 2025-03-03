@@ -35,8 +35,11 @@ function gtaw_discord_api_request($endpoint, $args = [], $method = 'GET') {
     // Full API URL
     $api_url = 'https://discord.com/api/v10/' . ltrim($endpoint, '/');
     
-    // Make the request
-    $response = 'GET' === $method ? wp_remote_get($api_url, $args) : wp_remote_post($api_url, $args);
+    // Set the HTTP method
+    $args['method'] = $method;
+    
+    // Make the request using wp_remote_request which supports all HTTP methods
+    $response = wp_remote_request($api_url, $args);
     
     // Handle errors
     if (is_wp_error($response)) {
@@ -179,8 +182,9 @@ function gtaw_get_user_discord_roles($discord_id, $force_refresh = false) {
         return $member;
     }
     
+    // If roles key doesn't exist or is not an array, return empty array instead of error
     if (!isset($member['roles']) || !is_array($member['roles'])) {
-        return new WP_Error('invalid_member_data', 'Discord member data does not contain roles');
+        return [];
     }
     
     return $member['roles'];
