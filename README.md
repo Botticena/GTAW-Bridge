@@ -1,4 +1,4 @@
-# GTAW WordPress Bridge Plugin
+# GTAW WordPress Bridge Plugin - 1.1 (W.I.P)
 
 The GTAW WordPress Bridge Plugin integrates GTA:W OAuth authentication with WordPress, allowing GTA:W users to create character-based WordPress accounts. Now built with a modular architecture, the plugin’s core file remains lean while additional functionalities (such as OAuth and Discord integration) are encapsulated in separate module files. This design makes it easy to extend and maintain the plugin without altering the core.
 
