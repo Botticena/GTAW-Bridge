@@ -66,6 +66,10 @@ function gtaw_discord_settings_page_callback() {
             'title' => 'Store Notifications',
             'callback' => 'gtaw_discord_store_notifications_tab'
         ],
+        'post-notifications' => [
+            'title' => 'Post Notifications',
+            'callback' => 'gtaw_discord_post_notifications_tab'
+        ],
         'role-mapping' => [
             'title' => 'Role Mapping',
             'callback' => 'gtaw_discord_role_mapping_tab'
@@ -247,7 +251,8 @@ function gtaw_load_discord_submodules() {
         'store-notifications.php',
         'role-mapping.php',
         'member-card.php',
-		'guide.php'
+        'guide.php',
+        'post-notifications.php'
     ];
     
     foreach ($submodules as $submodule) {

@@ -88,6 +88,13 @@ add_action('wp_footer', 'gtaw_display_character_selection_modal');
  * Handle logout and character switching
  */
 function gtaw_handle_logout_and_switch() {
+    // First check if we're using the new character switching method
+    if (isset($_POST['gtaw_switch_character']) && isset($_POST['gtaw_character_nonce'])) {
+        // This will be handled by our new character-switching.php
+        return;
+    }
+    
+    // Handle the traditional logout method
     if (isset($_POST['gtaw_logout_and_switch']) && isset($_POST['gtaw_switch_nonce']) && wp_verify_nonce($_POST['gtaw_switch_nonce'], 'gtaw_logout_and_switch')) {
         // Get the current user's info before logout
         $user_id = get_current_user_id();

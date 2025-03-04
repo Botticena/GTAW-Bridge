@@ -125,6 +125,7 @@ function gtaw_add_woocommerce_dashboard_widget() {
     
     $user_id = get_current_user_id();
     $character = get_user_meta($user_id, 'active_gtaw_character', true);
+    $available_characters = get_user_meta($user_id, 'gtaw_available_characters', true);
     
     if (empty($character)) {
         return;
@@ -135,13 +136,57 @@ function gtaw_add_woocommerce_dashboard_widget() {
         <h4>Your GTA:W Character</h4>
         <p><strong>Name:</strong> <?php echo esc_html($character['firstname'] . ' ' . $character['lastname']); ?></p>
         <p><strong>Character ID:</strong> <?php echo esc_html($character['id']); ?></p>
-        <p>
+        
+        <?php if (!empty($available_characters) && is_array($available_characters) && count($available_characters) > 1): ?>
+            <button type="button" class="button toggle-character-selector">Switch Character</button>
+            
+            <div class="character-selector-container" style="display: none; margin-top: 15px;">
+                <h5>Select Character</h5>
+                <?php foreach ($available_characters as $char): ?>
+                    <?php 
+                    // Skip if missing required fields
+                    if (empty($char['id']) || empty($char['firstname']) || empty($char['lastname'])) {
+                        continue;
+                    }
+                    
+                    // Skip current character
+                    if ($char['id'] == $character['id']) {
+                        continue;
+                    }
+                    ?>
+                    <div style="margin-bottom: 10px;">
+                        <form method="post" action="">
+                            <?php wp_nonce_field('gtaw_switch_character', 'gtaw_character_nonce'); ?>
+                            <input type="hidden" name="gtaw_switch_character" value="1">
+                            <input type="hidden" name="character_id" value="<?php echo esc_attr($char['id']); ?>">
+                            <input type="hidden" name="character_firstname" value="<?php echo esc_attr($char['firstname']); ?>">
+                            <input type="hidden" name="character_lastname" value="<?php echo esc_attr($char['lastname']); ?>">
+                            <button type="submit" class="button button-small">
+                                <?php echo esc_html($char['firstname'] . ' ' . $char['lastname']); ?>
+                            </button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                $('.toggle-character-selector').on('click', function() {
+                    $('.character-selector-container').slideToggle();
+                });
+            });
+            </script>
+        <?php else: ?>
+            <!-- This user only has one character in GTA:W or we couldn't retrieve multiple characters -->
+            <p>
+                <em>To switch to a different character, you'll need to log out first.</em>
+            </p>
             <form method="post" action="">
                 <?php wp_nonce_field('gtaw_logout_and_switch', 'gtaw_switch_nonce'); ?>
                 <input type="hidden" name="gtaw_logout_and_switch" value="1">
-                <button type="submit" class="button">Switch Character</button>
+                <button type="submit" class="button">Log Out & Switch Character</button>
             </form>
-        </p>
+        <?php endif; ?>
     </div>
     <?php
 }
