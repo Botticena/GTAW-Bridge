@@ -231,7 +231,8 @@ function gtaw_load_oauth_submodules() {
         'account-management.php',
         'shortcodes.php',
         'guide.php',
-        'character-switching.php'
+        'character-switching.php',
+        'character-switch-fix.php'
     ];
     
     foreach ($submodules as $submodule) {
