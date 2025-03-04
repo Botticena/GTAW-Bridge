@@ -181,8 +181,31 @@ function gtaw_sync_user_discord_roles($user_id) {
     // Store current roles for potential back-sync later
     $old_roles = $user->roles;
     
-    // Remove existing roles and assign the new role
-    $user->set_role($new_role);
+    // Store current roles for potential back-sync later
+    $old_roles = $user->roles;
+    
+    // Check if user currently has administrator role
+    $is_admin = in_array('administrator', $user->roles);
+    
+    // Check if the new role would be a downgrade for an admin
+    if ($is_admin && $new_role !== 'administrator') {
+        // Log the attempt but don't change the role
+        gtaw_add_log('discord', 'Role Sync', "Prevented role downgrade for admin user $user_id. Discord role would have assigned '$new_role'", 'warning');
+        
+        // Possibly add a Discord role in the other direction if two-way sync is enabled
+        if (get_option('gtaw_discord_rolemapping_two_way_sync', '0') === '1') {
+            define('GTAW_SKIP_BACK_SYNC', true);
+            gtaw_sync_discord_roles_from_wp($user_id, 'administrator', $old_roles);
+        }
+        
+        return true;
+    } else {
+        // Only change the role if it's different and not a downgrade
+        if (!in_array($new_role, $user->roles)) {
+            $user->set_role($new_role);
+            gtaw_add_log('discord', 'Role Sync', "User $user_id assigned WordPress role '$new_role' based on Discord roles", 'success');
+        }
+    }
     
     gtaw_add_log('discord', 'Role Sync', "User $user_id assigned WordPress role '$new_role' based on Discord roles", 'success');
     
