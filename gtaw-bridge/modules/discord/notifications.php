@@ -248,6 +248,8 @@ function gtaw_add_discord_checkout_field() {
                 }
             });
             </script>
+      	<?php else: ?>
+      		<span style="color: green;"><b>✓ Your discord account is linked and you are on your server.</b></span>
         <?php endif; ?>
     </div>
     <?php
