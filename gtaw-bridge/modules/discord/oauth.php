@@ -212,6 +212,12 @@ function gtaw_discord_buttons_shortcode() {
         return '<p>Please log in to manage your Discord account.</p>';
     }
     
+    // Check if current user is an administrator
+    $current_user = wp_get_current_user();
+    if (in_array('administrator', (array) $current_user->roles)) {
+        return ''; // Return empty for admins - no buttons shown
+    }
+    
     $user_id = get_current_user_id();
     $discord_id = get_user_meta($user_id, 'discord_ID', true);
     

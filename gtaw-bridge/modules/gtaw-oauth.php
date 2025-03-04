@@ -224,6 +224,10 @@ define('GTAW_OAUTH_PATH', plugin_dir_path(__FILE__) . 'oauth/');
 
 // Load all OAuth submodules
 function gtaw_load_oauth_submodules() {
+    // Don't load oAuth module on login page for security reasons.
+    if (in_array($GLOBALS['pagenow'], ['wp-login.php'])) {
+        return;
+    }
     // Load the submodules
     $submodules = [
         'core.php',

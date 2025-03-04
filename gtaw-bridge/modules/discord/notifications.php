@@ -156,6 +156,11 @@ add_filter('gtaw_discord_settings_tabs', function($tabs) {
 
 // Add Discord notification opt-in to WooCommerce checkout
 function gtaw_add_discord_checkout_field() {
+    // Skip for administrators using direct role check
+    $current_user = wp_get_current_user();
+    if (in_array('administrator', (array) $current_user->roles)) {
+        return;
+    }
     $user_id = get_current_user_id();
     $discord_id = get_user_meta($user_id, 'discord_ID', true);
     $guild_id = get_option('gtaw_discord_guild_id', '');

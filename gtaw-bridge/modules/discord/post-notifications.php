@@ -982,10 +982,19 @@ function gtaw_prepare_post_notification_embed($post, $notification) {
     }
     
     // Add thumbnail if enabled and exists
-    if (isset($notification['include_thumbnail']) && $notification['include_thumbnail'] && has_post_thumbnail($post->ID)) {
-        $thumbnail_url = get_the_post_thumbnail_url($post->ID, 'large');
-        if ($thumbnail_url) {
-            $embed['image'] = ['url' => $thumbnail_url];
+    if (isset($notification['include_thumbnail']) && $notification['include_thumbnail']) {
+        $image_url = '';
+        
+        if ($post->post_type === 'attachment') {
+            // For media attachments, use the attachment URL directly
+            $image_url = wp_get_attachment_url($post->ID);
+        } else if (has_post_thumbnail($post->ID)) {
+            // For regular posts, use the featured image
+            $image_url = get_the_post_thumbnail_url($post->ID, 'large');
+        }
+        
+        if (!empty($image_url)) {
+            $embed['image'] = ['url' => $image_url];
         }
     }
     
@@ -1045,10 +1054,17 @@ function gtaw_prepare_post_notification_embed($post, $notification) {
         $product = wc_get_product($post->ID);
         
         if ($product) {
-            // Add price
+            // Add price - properly formatted
             if (isset($notification['show_price']) && $notification['show_price']) {
-                $price = $product->get_price_html();
-                $price = strip_tags($price);
+                $price_html = $product->get_price_html();
+                // Strip HTML tags but decode entities to ensure proper display
+                $price = html_entity_decode(strip_tags($price_html));
+                
+                // Ensure currency is shown properly
+                if (strpos($price, ' ') === false) {
+                    $currency = get_woocommerce_currency();
+                    $price .= ' ' . $currency;
+                }
                 
                 $embed['fields'][] = [
                     'name' => 'Price',
@@ -1069,14 +1085,30 @@ function gtaw_prepare_post_notification_embed($post, $notification) {
                 }
             }
             
-            // Add stock status
+            // Add stock status with proper spacing
             if (isset($notification['show_stock']) && $notification['show_stock']) {
                 $stock_status = $product->get_stock_status();
-                $stock_quantity = $product->get_stock_quantity();
                 
-                $stock_text = ucfirst($stock_status);
+                // Format the stock status with proper spacing
+                switch ($stock_status) {
+                    case 'instock':
+                        $stock_text = 'In Stock';
+                        break;
+                    case 'outofstock':
+                        $stock_text = 'Out of Stock';
+                        break;
+                    case 'onbackorder':
+                        $stock_text = 'On Backorder';
+                        break;
+                    default:
+                        $stock_text = ucfirst($stock_status);
+                        break;
+                }
+                
+                // Add stock quantity if available
+                $stock_quantity = $product->get_stock_quantity();
                 if ($stock_status === 'instock' && $stock_quantity !== null) {
-                    $stock_text = 'In Stock (' . $stock_quantity . ')';
+                    $stock_text .= ' (' . $stock_quantity . ')';
                 }
                 
                 $embed['fields'][] = [
@@ -1416,3 +1448,79 @@ add_action('wp_ajax_gtaw_test_enhanced_discord_notification', 'gtaw_test_enhance
 
 // Remove the original post notifications module to avoid conflicts
 remove_action('wp_insert_post', 'gtaw_discord_send_post_notification', 10);
+
+/**
+ * Hook for attachment uploads to trigger Discord notifications
+ * 
+ * @param int $attachment_id The attachment ID
+ */
+function gtaw_discord_attachment_notification($attachment_id) {
+    // Get the attachment post object
+    $attachment = get_post($attachment_id);
+    
+    // Skip if this is a revision or auto-save
+    if (!$attachment || $attachment->post_type !== 'attachment') {
+        return;
+    }
+    
+    // Skip if already notified
+    if (get_post_meta($attachment_id, '_gtaw_discord_notified', true) === 'published') {
+        return;
+    }
+    
+    // Get notification settings
+    $notifications = get_option('gtaw_discord_post_notifications', []);
+    if (empty($notifications)) {
+        return;
+    }
+    
+    // Find matching notification for attachment type
+    $matching_notifications = [];
+    foreach ($notifications as $notification) {
+        if ($notification['post_type'] === 'attachment' && isset($notification['enabled']) && $notification['enabled']) {
+            $matching_notifications[] = $notification;
+        }
+    }
+    
+    if (empty($matching_notifications)) {
+        return;
+    }
+    
+    // Process each matching notification
+    foreach ($matching_notifications as $notification) {
+        // Skip if missing required fields
+        if (empty($notification['channel_id'])) {
+            continue;
+        }
+        
+        // Prepare the mention content if enabled
+        $message_content = '';
+        if (isset($notification['role_enabled']) && $notification['role_enabled'] && 
+            !empty($notification['role_id'])) {
+            $message_content = '<@&' . $notification['role_id'] . '>';
+        }
+        
+        // Prepare the embed
+        $embed = gtaw_prepare_post_notification_embed($attachment, $notification);
+        
+        // Send the notification
+        $result = gtaw_discord_api_request("channels/{$notification['channel_id']}/messages", [
+            'body' => json_encode([
+                'content' => $message_content,
+                'embeds' => [$embed]
+            ]),
+            'headers' => [
+                'Content-Type' => 'application/json'
+            ]
+        ], 'POST');
+        
+        if (is_wp_error($result)) {
+            gtaw_add_log('discord', 'Error', "Failed to send attachment notification for ID {$attachment_id}: " . $result->get_error_message(), 'error');
+        } else {
+            gtaw_add_log('discord', 'Notification', "Sent attachment notification for ID {$attachment_id} to channel {$notification['channel_id']}", 'success');
+            update_post_meta($attachment_id, '_gtaw_discord_notified', 'published');
+        }
+    }
+}
+add_action('add_attachment', 'gtaw_discord_attachment_notification');
+add_action('edit_attachment', 'gtaw_discord_attachment_notification');
