@@ -160,7 +160,14 @@ function gtaw_fleeca_process_payment_success($order_id, $token_data) {
         return false;
     }
     
-    // Add payment information to the order notes
+    // Store the token in hidden meta data instead of as the transaction ID
+    update_post_meta($order_id, '_fleeca_payment_token', $token_data['token']);
+    update_post_meta($order_id, '_fleeca_routing_from', $token_data['routing_from']);
+    update_post_meta($order_id, '_fleeca_routing_to', $token_data['routing_to']);
+    update_post_meta($order_id, '_fleeca_payment_amount', $token_data['payment']);
+    update_post_meta($order_id, '_fleeca_payment_time', current_time('mysql'));
+    
+    // Add payment information to the order notes for admin reference
     $order->add_order_note(
         sprintf(
             'Fleeca Bank payment completed (Amount: %s, From: %s, To: %s, Token: %s)',
@@ -168,18 +175,16 @@ function gtaw_fleeca_process_payment_success($order_id, $token_data) {
             $token_data['routing_from'],
             $token_data['routing_to'],
             $token_data['token']
-        )
+        ),
+        false // Set to private note (only visible to admin)
     );
     
-    // Set the transaction ID to the token
-    $order->set_transaction_id($token_data['token']);
-    
-    // Payment complete
+    // Payment complete without setting transaction ID
     $order->payment_complete();
     
     // If this is a sandbox payment, add a note
     if (isset($token_data['sandbox']) && $token_data['sandbox']) {
-        $order->add_order_note('This was a Fleeca Bank sandbox payment (test mode).');
+        $order->add_order_note('This was a Fleeca Bank sandbox payment (test mode).', false);
     }
     
     // Save the order

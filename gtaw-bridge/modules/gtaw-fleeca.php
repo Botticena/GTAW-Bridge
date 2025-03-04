@@ -236,3 +236,4 @@ function gtaw_init_fleeca_module() {
     }
 }
 add_action('plugins_loaded', 'gtaw_init_fleeca_module', 15); // Priority 15 to load after WooCommerce and main plugin
+
