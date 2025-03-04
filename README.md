@@ -1,118 +1,131 @@
-# GTAW WordPress Bridge Plugin - 1.1 (W.I.P)
+# GTA:W Bridge
 
-The GTAW WordPress Bridge Plugin integrates GTA:W OAuth authentication with WordPress, allowing GTA:W users to create character-based WordPress accounts. Now built with a modular architecture, the plugin’s core file remains lean while additional functionalities (such as OAuth and Discord integration) are encapsulated in separate module files. This design makes it easy to extend and maintain the plugin without altering the core.
+**Version 1.1**
 
-Demo available here: [https://vommoda.com/](https://vommoda.com/)
+## Description
 
-## Plugin Structure
+GTA:W Bridge connects your WordPress website with the GTA World roleplay platform, enabling seamless account integration, Discord synchronization, and Fleeca Bank payments through WooCommerce. This plugin is perfect for roleplay business owners who want to extend their in-game businesses to the web.
 
-The plugin is organized into distinct folders and modules:
+## Major Features
 
-```
-GTAW-Bridge/
-+- gtaw-bridge.php            // Main plugin file: loads core functionality, registers assets, checks dependencies, and auto-loads modules.
-+- modules/
-¦  +- gtaw-oauth.php          // Handles GTA:W OAuth authentication and account management.
-¦  +- gtaw-discord.php        // Manages Discord integration for linking/unlinking Discord accounts with WooCommerce accounts.
-+- assets/
-¦  +- css/
-¦  ¦  +- gtaw-style.css       // Plugin styles.
-¦  +- js/
-¦     +- gtaw-script.js       // Plugin scripts.
-```
+### 1. GTA:W OAuth Integration (Core)
+- **Single Sign-On:** Allow users to log in with their existing GTA:W accounts
+- **Character-Based Accounts:** Create separate WordPress accounts for each GTA:W character
+- **Account Management:** Easy interface for users to switch between character accounts
+- **WooCommerce Integration:** Character information appears in user accounts
+
+### 2. Discord Integration
+- **Account Linking:** Users can connect their Discord accounts to their WordPress accounts
+- **Role Mapping:** Synchronize Discord roles with WordPress user roles (both directions)
+- **Order Notifications:** Send order status updates to customers via Discord
+- **Store Notifications:** Receive detailed order alerts in your Discord server
+- **Member Card:** Display users' Discord roles on their profile
+- **Discord Checkout:** Require Discord membership for checkout (optional)
+
+### 3. Fleeca Bank WooCommerce Integration
+- **Custom Payment Gateway:** Accept payments through GTA:W's Fleeca Bank system
+- **Secure Transactions:** All payments are processed through the official GTA:W banking system
+- **Order Status Updates:** Automatic order completion upon payment
+- **Sandbox Testing:** Test your store without real currency transfers
+
+### 4. Comprehensive Logging
+- **Detailed Activity Logs:** Track authentication, Discord interactions, and payments
+- **Troubleshooting Tools:** Debug information for all modules
+- **Security Monitoring:** Track account creations and payment attempts
+
+## Requirements
+
+- WordPress 5.0 or higher
+- WooCommerce 6.0 or higher
+- GTA:W Developer API credentials
+- Discord Developer Application
+- Fleeca Bank API key
 
 ## Installation
 
-### Upload and Activate the Plugin
+1. Upload the `gtaw-bridge` folder to your `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Configure the modules through the GTA:W Bridge menu in your admin dashboard
 
-1. [Download the latest ZIP file](https://github.com/Botticena/gtaw-bridge/releases/latest).
-2. In your WordPress admin dashboard, go to **Plugins > Add New**.
-3. Click **Upload Plugin**, select the ZIP file, and then click **Install Now**.
-4. Once installed, click **Activate**.
+## Module Configuration
 
-### Verify Dependencies
+### OAuth Module
+- Obtain OAuth credentials from the [GTA:W UCP Developers section](https://ucp.gta.world/developers/oauth)
+- Configure your Client ID, Client Secret, and Callback URL
+- Add login buttons to your site using the provided shortcodes
 
-- **WooCommerce:** Ensure that WooCommerce is installed and activated. If not, the plugin will display an admin notice.
+### Discord Module
+- Create a [Discord Application](https://discord.com/developers/applications)
+- Configure the Bot Token, Client ID, Client Secret, and Guild ID
+- Set up role mappings and notification templates
+- Customize notification settings for different order statuses
 
-## Configuration
+### Fleeca Bank Module
+- Request a Fleeca Bank API key from GTA:W UCP Developers
+- Configure the payment gateway settings
+- Test transactions using the sandbox mode
 
-After activation, configure the plugin settings for each module via the GTAW Bridge menu in your admin dashboard.
+## Shortcodes
 
-### GTA:W OAuth Settings (gtaw-oauth Module)
+### OAuth Shortcodes
+- `[gtaw_login]` - Display a basic login link
+- `[gtaw_login_button]` - Display a styled button with custom text
+- `[gtaw_user_info]` - Show information about the logged-in character
+- `[gtaw_character_info]` - Display detailed character information
+- `[gtaw_if_logged_in]` and `[gtaw_if_not_logged_in]` - Conditional content display
 
-1. Click on **GTA:W Bridge** in the WordPress sidebar.
-2. Select the **GTA:W OAuth** tab.
-3. Fill in the following fields:
-   - **OAuth Client ID:** Your GTA:W Client ID from the [GTA:W UCP Developers section](https://ucp.gta.world/developers/oauth).
-   - **OAuth Client Secret:** Your GTA:W Client Secret.
-   - **OAuth Callback/Redirect URL:** Auto-generated (e.g., `https://yoursite.com/?gta_oauth=callback`). Ensure that this matches the URL set in your GTA:W UCP Developers section.
-4. Click **Save Changes**.
+### Discord Shortcodes
+- `[gtaw_discord_buttons]` - Display link/unlink Discord buttons
 
-### Discord Settings (gtaw-discord Module)
+## Upgrade Notes from v1.0
 
-1. In the **GTA:W Bridge** menu, select the **Discord Settings** tab.
-2. Enable the Discord module by checking the "Activate Discord Module" checkbox.
-3. Enter your Discord credentials:
-   - **Discord Client ID**
-   - **Discord Client Secret**
-   - **Discord Bot Token**
-4. The **Discord OAuth Redirect URI** is auto-generated (e.g., `https://yoursite.com/?discord_oauth=callback`). Configure this URI in your Discord Developer Portal.
-5. Click **Save Changes**.
+If you're upgrading from version 1.0, here's what's new:
 
-## Modular Architecture
+1. **Discord Integration** - Complete Discord module with role mapping, notifications, and member cards
+2. **Fleeca Bank Gateway** - New WooCommerce payment gateway for in-game currency transactions
+3. **Enhanced Logging** - Comprehensive logging system across all modules
+4. **Improved UI** - Better admin interfaces with detailed guides
+5. **Two-Way Role Sync** - Synchronize roles between WordPress and Discord in both directions
+6. **Module Activation** - All modules can be activated or desactivated depending on your needs.
 
-The modular design allows you to extend the plugin without modifying the core file:
+## Frequently Asked Questions
 
-- **Core File (`gtaw-bridge.php`):**  
-  - Handles basic plugin initialization, dependency checks, asset enqueuing, and module auto-loading.
-- **Modules (`modules/` folder):**  
-  - **gtaw-oauth.php:** Contains all code related to GTA:W OAuth and account creation/login.  
-  - **gtaw-discord.php:** Adds Discord integration, allowing WooCommerce users to link/unlink their Discord accounts.
-- **Assets (`assets/` folder):**  
-  - Organizes CSS and JavaScript files separately for cleaner maintenance.
+### Is this an official GTA World plugin?
+No, this is a third-party plugin. While it integrates with GTA World's API, it is not officially created or maintained by GTA World.
 
-To add new functionality, simply create a new module file in the `modules/` folder. The core will automatically load it on activation.
+### Do users need to create new accounts to use my site?
+No, users log in with their existing GTA:W accounts, and a WordPress account is automatically created for their characters.
 
-## Usage
+### How secure are the Fleeca Bank payments?
+All payments are processed directly through GTA:W's official banking system. This plugin simply facilitates the connection between your store and their payment system.
 
-### Using the GTA:W OAuth Login
+## Support and Documentation
 
-- **Shortcode:**  
-  Embed the login link anywhere on your site using: `[gtaw_login]`
-- **User Flow:**  
-  When users click the login link, they are redirected to the GTA:W OAuth page. After authenticating, they are redirected back to your website, and the plugin stores the GTA:W API response (user data and characters) in a cookie. Users can then choose a character to create a new account or log in.
+For more detailed documentation, please refer to the guide tabs within each module's settings page in your WordPress admin area.
 
-### Account Management
+For support, please open an issue on the [GitHub repository](https://github.com/Botticena/gtaw-bridge/).
 
-- **First Login:**  
-  New users are prompted via a modal to select a character from the GTA:W API response. The plugin creates a WordPress account for the chosen character.
-- **Returning Users:**  
-  Users with existing accounts can choose which connected character to log in with, or register a new character.
+## Changelog
 
-### Discord Integration (WooCommerce)
+### 1.1
+- Added Discord integration module with role mapping
+- Added Discord notifications for customers and store owners
+- Added Fleeca Bank WooCommerce payment gateway
+- Added comprehensive logging system
+- Improved admin UI with detailed guides
+- Added two-way role synchronization with Discord
+- Added Discord member card display
+- Added various configuration options for all modules
 
-- **My Account Integration:**  
-  In the WooCommerce My Account area, a new **Discord Settings** endpoint is available where users can link or unlink their Discord account.
-- **Shortcode:**  
-  Use `[gtaw_discord_buttons]` to display a link for linking/unlinking a Discord account.
-- **OAuth Flow:**  
-  The Discord module uses OAuth (with the `identify` scope) to retrieve the user's Discord ID.
+### 1.0
+- Initial release with GTA:W OAuth integration
+- Character-based account system
+- Basic account management features
 
-## Troubleshooting
+## Credits
 
-- **Cookies:**  
-  Ensure that your site allows cookies, as the plugin uses cookies (named `gtaw_user_data`) to store API responses.
-- **OAuth Callback:**  
-  Verify that the OAuth Callback/Redirect URLs in the plugin settings match those configured in the GTA:W and Discord developer portals.
-- **WooCommerce Dependency:**  
-  Confirm that WooCommerce is active; otherwise, the plugin will notify you.
-- **Cache:**  
-  Clear your browser and server cache after making changes to ensure that the latest scripts and settings are loaded.
+Developed by [Lena](https://forum.gta.world/en/profile/56418-lena/)
 
-## Final Notes
+## License
 
-The modular architecture of the GTAW WordPress Bridge Plugin streamlines development and maintenance. New modules can be added without altering the core, keeping your code clean and extendable.
-
-For any questions or issues, feel free to reach out on the GTA:W forums:
-- **Contact:** [Lena on GTA:W Forums](https://forum.gta.world/en/profile/56418-lena/)
-- **Plugin Thread:** [GTA:W OAuth WordPress Plugin Guide](https://forum.gta.world/en/topic/141314-guide-gtaw-oauth-wordpress-plugin/)
+This plugin is licensed under the GPL v2 or later.
