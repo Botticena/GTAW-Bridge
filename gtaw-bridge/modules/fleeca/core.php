@@ -41,9 +41,12 @@ function gtaw_fleeca_get_payment_url($amount, $api_key = '') {
 
 /**
  * Validate a token with the Fleeca Bank API
+ * 
+ * This function first tries non-strict validation, which works for all valid tokens
+ * even if they've been used/expired
  *
  * @param string $token The token to validate
- * @param bool $strict Whether to use strict mode validation
+ * @param bool $strict Whether to use strict mode validation (not used in this implementation)
  * @return array|WP_Error The validation response or error
  */
 function gtaw_fleeca_validate_token($token, $strict = true) {
@@ -51,12 +54,11 @@ function gtaw_fleeca_validate_token($token, $strict = true) {
         return new WP_Error('missing_token', 'Token is required for validation');
     }
     
-    // Determine the validation URL based on strict mode
-    $validation_url = $strict 
-        ? "https://banking.gta.world/gateway_token/{$token}/strict" 
-        : "https://banking.gta.world/gateway_token/{$token}";
+    // First try non-strict validation to see if the token is valid at all
+    $validation_url = "https://banking.gta.world/gateway_token/{$token}";
     
     // Make the request to validate the token
+    gtaw_add_log('fleeca', 'Debug', "Validating token with URL: {$validation_url}", 'success');
     $response = wp_remote_get($validation_url);
     
     if (is_wp_error($response)) {
@@ -65,43 +67,82 @@ function gtaw_fleeca_validate_token($token, $strict = true) {
     }
     
     $response_code = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
     
-    // Check for API errors
-    if ($response_code < 200 || $response_code >= 300) {
-        // In strict mode, 404 is expected for expired/sandbox tokens
-        if ($strict && $response_code === 404) {
-            gtaw_add_log('fleeca', 'Error', "Token validation failed: Token expired or in sandbox mode", 'error');
-            return new WP_Error('invalid_token', 'Token expired or in sandbox mode');
+    gtaw_add_log('fleeca', 'Debug', "Response code: {$response_code}, Response body: " . substr($response_body, 0, 200) . "...", 'success');
+    
+    // Check if non-strict validation worked
+    if ($response_code >= 200 && $response_code < 300) {
+        // Parse the response
+        $token_data = json_decode($response_body, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            gtaw_add_log('fleeca', 'Error', "Failed to parse token validation response: " . json_last_error_msg(), 'error');
+            return new WP_Error('json_parse_error', 'Failed to parse API response');
         }
         
-        $error_message = wp_remote_retrieve_response_message($response);
-        gtaw_add_log('fleeca', 'Error', "API Error ({$response_code}): {$error_message}", 'error');
+        // Validate that our API key matches the one in the response
+        $stored_api_key = get_option('gtaw_fleeca_api_key', '');
+        if ($token_data['auth_key'] !== $stored_api_key) {
+            gtaw_add_log('fleeca', 'Error', "API key mismatch in token validation. Expected: {$stored_api_key}, Got: {$token_data['auth_key']}", 'error');
+            return new WP_Error('auth_key_mismatch', 'API key in response does not match stored key');
+        }
         
-        return new WP_Error(
-            'fleeca_api_error',
-            sprintf('Fleeca API Error (%d): %s', $response_code, $error_message)
-        );
+        // Check if the token is expired
+        if (isset($token_data['token_expired']) && $token_data['token_expired']) {
+            gtaw_add_log('fleeca', 'Warning', "Token is marked as expired but validation succeeded", 'success');
+            // We still accept the token if everything else is valid
+        }
+        
+        gtaw_add_log('fleeca', 'Token', "Successfully validated token for payment of {$token_data['payment']}", 'success');
+        return $token_data;
     }
     
-    // Parse the response
-    $body = wp_remote_retrieve_body($response);
-    $token_data = json_decode($body, true);
+    // If the above fails, try strict mode as a fallback
+    $strict_url = "https://banking.gta.world/gateway_token/{$token}/strict";
+    gtaw_add_log('fleeca', 'Debug', "Non-strict validation failed, trying strict validation: {$strict_url}", 'success');
     
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        gtaw_add_log('fleeca', 'Error', "Failed to parse token validation response", 'error');
-        return new WP_Error('json_parse_error', 'Failed to parse API response');
+    $strict_response = wp_remote_get($strict_url);
+    
+    if (is_wp_error($strict_response)) {
+        gtaw_add_log('fleeca', 'Error', "Strict token validation failed: " . $strict_response->get_error_message(), 'error');
+        return $strict_response;
     }
     
-    // Validate that our API key matches the one in the response
-    $stored_api_key = get_option('gtaw_fleeca_api_key', '');
-    if ($token_data['auth_key'] !== $stored_api_key) {
-        gtaw_add_log('fleeca', 'Error', "API key mismatch in token validation", 'error');
-        return new WP_Error('auth_key_mismatch', 'API key in response does not match stored key');
+    $strict_code = wp_remote_retrieve_response_code($strict_response);
+    $strict_body = wp_remote_retrieve_body($strict_response);
+    
+    gtaw_add_log('fleeca', 'Debug', "Strict response code: {$strict_code}, Response body: " . substr($strict_body, 0, 200) . "...", 'success');
+    
+    if ($strict_code >= 200 && $strict_code < 300) {
+        // Parse the response
+        $token_data = json_decode($strict_body, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            gtaw_add_log('fleeca', 'Error', "Failed to parse strict token validation response", 'error');
+            return new WP_Error('json_parse_error', 'Failed to parse API response');
+        }
+        
+        // Validate API key
+        $stored_api_key = get_option('gtaw_fleeca_api_key', '');
+        if ($token_data['auth_key'] !== $stored_api_key) {
+            gtaw_add_log('fleeca', 'Error', "API key mismatch in strict token validation", 'error');
+            return new WP_Error('auth_key_mismatch', 'API key in response does not match stored key');
+        }
+        
+        gtaw_add_log('fleeca', 'Token', "Successfully validated token in strict mode for payment of {$token_data['payment']}", 'success');
+        return $token_data;
     }
     
-    gtaw_add_log('fleeca', 'Token', "Successfully validated token for payment of {$token_data['payment']}", 'success');
+    // If we get here, both validations failed
+    if ($strict_code === 404) {
+        // This is the most common case - expired token or sandbox mode
+        gtaw_add_log('fleeca', 'Error', "Both validation methods failed. Token might be expired, used, or in sandbox mode.", 'error');
+        return new WP_Error('invalid_token', 'Token expired or already used');
+    }
     
-    return $token_data;
+    gtaw_add_log('fleeca', 'Error', "Token validation failed completely. Non-strict code: {$response_code}, Strict code: {$strict_code}", 'error');
+    return new WP_Error('validation_failed', 'Token validation failed');
 }
 
 /**
