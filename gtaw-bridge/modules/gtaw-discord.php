@@ -154,13 +154,6 @@ function gtaw_discord_settings_tab() {
         ?>
         <table class="form-table">
             <tr valign="top">
-                <th scope="row">Activate Discord Module</th>
-                <td>
-                    <input type="checkbox" name="gtaw_discord_enabled" value="1" <?php checked($enabled, 1); ?> />
-                    <p class="description">Check to activate Discord integration. Uncheck to disable all Discord functionality.</p>
-                </td>
-            </tr>
-            <tr valign="top">
                 <th scope="row">Discord Client ID</th>
                 <td>
                     <input type="text" name="gtaw_discord_client_id" value="<?php echo esc_attr($client_id); ?>" size="50" />

@@ -139,13 +139,6 @@ function gtaw_fleeca_settings_tab() {
         ?>
         <table class="form-table">
             <tr valign="top">
-                <th scope="row">Activate Fleeca Module</th>
-                <td>
-                    <input type="checkbox" name="gtaw_fleeca_enabled" value="1" <?php checked($enabled, 1); ?> <?php echo !class_exists('WooCommerce') ? 'disabled' : ''; ?> />
-                    <p class="description">Check to activate Fleeca Bank integration for WooCommerce. Uncheck to disable.</p>
-                </td>
-            </tr>
-            <tr valign="top">
                 <th scope="row">Fleeca API Key</th>
                 <td>
                     <input type="text" name="gtaw_fleeca_api_key" value="<?php echo esc_attr($api_key); ?>" size="50" />

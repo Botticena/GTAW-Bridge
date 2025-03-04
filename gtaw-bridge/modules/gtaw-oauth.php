@@ -153,13 +153,6 @@ function gtaw_oauth_settings_tab() {
         ?>
         <table class="form-table">
             <tr valign="top">
-                <th scope="row">Activate OAuth Module</th>
-                <td>
-                    <input type="checkbox" name="gtaw_oauth_enabled" value="1" <?php checked($enabled, 1); ?> />
-                    <p class="description">Check to activate GTA:W OAuth integration. Uncheck to disable all OAuth functionality.</p>
-                </td>
-            </tr>
-            <tr valign="top">
                 <th scope="row">OAuth Client ID</th>
                 <td>
                     <input type="text" name="gtaw_client_id" value="<?php echo esc_attr($client_id); ?>" size="50" />
@@ -224,7 +217,7 @@ define('GTAW_OAUTH_PATH', plugin_dir_path(__FILE__) . 'oauth/');
 
 // Load all OAuth submodules
 function gtaw_load_oauth_submodules() {
-    // Don't load oAuth module on login page for security reasons.
+    // Don't load oAuth module on login page
     if (in_array($GLOBALS['pagenow'], ['wp-login.php'])) {
         return;
     }
