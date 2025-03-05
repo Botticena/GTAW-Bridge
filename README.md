@@ -44,11 +44,18 @@ The plugin also provides AJAX endpoints for:
 
 ## Changelog
 
-- **1.0.0**
-  - Initial release.
-  - OAuth-based login and account management.
-  - WooCommerce integration.
-  - GitHub updater for seamless updates.
+### **1.0**
+- **GTA:W OAuth Integration** – Enables authentication via GTA:W accounts.
+- **Character-Based WordPress Accounts** – Each character is treated as a separate WP user.
+- **WooCommerce Compatibility** – Ensures smooth integration with WooCommerce.
+- **OAuth Login Modal** – Displays a modal for new and returning users.
+- **First Login Flow** – Users select a character to create their WP account.
+- **Returning User Flow** – Allows existing users to log in or register additional characters.
+- **Account Switching** – Users can switch between their linked character accounts.
+- **Admin Settings Page** – Configure OAuth credentials in the WP admin panel.
+- **Secure Authentication** – Stores OAuth credentials securely.
+- **Custom Shortcode** – `[gtaw_login]` shortcode to embed login links anywhere.
+- **GitHub updater for seamless updates.**
 
 ## Contributing
 
