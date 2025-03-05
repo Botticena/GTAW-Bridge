@@ -1,12 +1,25 @@
 <?php
 /*
 Plugin Name: GTA:W Wordpress Bridge
-Description: GTA:World Roleplay Wordpress Bridge with oAuth.
-Version: 1.0
+Description: Seamlessly integrate your WordPress site with GTA:World, enabling character-based logins and automatic account creation via OAuth.
+Version: 1.0.0
 Author: Lena
 Author URI: https://forum.gta.world/en/profile/56418-lena/
 Plugin URI: https://github.com/Botticena/gtaw-bridge/
 */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+// Define the plugin directory constant for the updater.
+if ( ! defined( 'GTAW_BRIDGE_PLUGIN_DIR' ) ) {
+    define( 'GTAW_BRIDGE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+
+// Include the updater file.
+require_once GTAW_BRIDGE_PLUGIN_DIR . 'gtaw-updates.php';
 
 if ( is_admin() ) {
     if ( ! function_exists( 'is_plugin_active' ) ) {
