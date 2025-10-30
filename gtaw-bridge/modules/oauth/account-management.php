@@ -527,7 +527,7 @@ add_action('woocommerce_save_account_details', 'gtaw_prevent_password_validation
  * Remove password strength meter script for better performance
  */
 function gtaw_remove_password_strength_meter() {
-    if (is_account_page()) {
+    if (function_exists('is_account_page') && is_account_page()) {
         wp_dequeue_script('wc-password-strength-meter');
     }
 }
@@ -537,7 +537,7 @@ add_action('wp_print_scripts', 'gtaw_remove_password_strength_meter', 100);
  * Add custom CSS to hide password fields (as a fallback)
  */
 function gtaw_hide_account_password_fields() {
-    if (is_account_page()) {
+    if (function_exists('is_account_page') && is_account_page()) {
         ?>
         <style>
             .woocommerce-EditAccountForm fieldset {
@@ -568,7 +568,7 @@ add_filter('woocommerce_states', 'gtaw_custom_woocommerce_states');
  */
 function gtaw_make_email_field_readonly() {
     // Only for account fields on account page
-    if (is_account_page()) {
+    if (function_exists('is_account_page') && is_account_page()) {
         ?>
         <script type='text/javascript'>
         jQuery(function($) {
