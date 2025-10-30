@@ -2,7 +2,7 @@
 /*
 Plugin Name: GTA:W Bridge
 Description: GTA:World Roleplay Wordpress Bridge with oAuth.
-Version: 0.0.0
+Version: 1.1.1
 Author: Lena
 Author URI: https://forum.gta.world/en/profile/56418-lena/
 Plugin URI: https://github.com/Botticena/gtaw-bridge/
