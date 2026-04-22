@@ -1,11 +1,11 @@
-# GTA:W WordPress Bridge v1.2
+# GTA:W WordPress Bridge v1.2.1
 
-[![Version](https://img.shields.io/badge/version-1.2-blue.svg)](https://github.com/Botticena/GTAW-Bridge)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/Botticena/GTAW-Bridge)
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-GPL--2.0-green.svg)](LICENSE)
 
-**GTA:W WordPress Bridge v1.2** seamlessly integrates your WordPress site with the GTA:World Roleplay platform. This modular plugin provides comprehensive integration including OAuth authentication, Discord synchronization, and Fleeca Bank payment processing.
+**GTA:W WordPress Bridge v1.2.1** seamlessly integrates your WordPress site with the GTA:World Roleplay platform. This modular plugin provides comprehensive integration including OAuth authentication, Discord synchronization, and Fleeca Bank payment processing.
 
 ---
 
@@ -124,7 +124,7 @@ When users click the GTA:W login link, they're redirected to authenticate via GT
 The plugin uses a modular architecture allowing you to enable only the features you need:
 
 ```
-GTA:W Bridge v1.2
+GTA:W Bridge v1.2.1
 ├── 🔐 OAuth Module (Default: Enabled)
 │   ├── Authentication & Token Management
 │   ├── Character-based Account Creation
@@ -144,6 +144,12 @@ GTA:W Bridge v1.2
 ---
 
 ## 📊 Changelog
+
+### **v1.2.1** - Polish & block checkout
+- **🛒 WooCommerce** – Smoother GTA:W-style address and checkout handling in one place; fewer duplicate field tweaks
+- **💳 Fleeca** – Optional **block (modern) checkout** support; snappier gateway load and clearer payment UI
+- **🎛️ Admin** – Notices from WordPress are easier to see on the bridge page; you can **dismiss** the “block cart/checkout” reminder
+- **🔧 General** – Lighter utilities and Discord post-notification code, updates checker tuned; overall stability and maintainability
 
 ### **v1.2** - Fleeca Merchant API v2 & polish
 - **💳 Fleeca v2** – Hosted checkout, HMAC webhooks, browser return with `payment_id`; **Callback** / **Return** URLs for the Merchant Center; optional rewrite flush when permalinks change

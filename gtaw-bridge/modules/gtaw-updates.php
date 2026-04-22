@@ -18,6 +18,8 @@ class GTAW_Lightweight_Updater {
     private $cache_enabled = true;
     private $cache_duration = 86400; // 24 hours by default
     private $last_api_response = null;
+    private $skip_conditional_github_request = false;
+    private $github_304_retry_in_progress = false;
     
     /**
      * Initialize the updater with minimal overhead
@@ -107,15 +109,18 @@ class GTAW_Lightweight_Updater {
         ];
         
         // Add conditional request headers if we have ETag or Last-Modified from previous request
-        $etag = get_option('gtaw_github_etag', '');
-        if (!empty($etag)) {
-            $request_args['headers']['If-None-Match'] = $etag;
+        if (!$this->skip_conditional_github_request) {
+            $etag = get_option('gtaw_github_etag', '');
+            if (!empty($etag)) {
+                $request_args['headers']['If-None-Match'] = $etag;
+            }
+
+            $last_modified = get_option('gtaw_github_last_modified', '');
+            if (!empty($last_modified)) {
+                $request_args['headers']['If-Modified-Since'] = $last_modified;
+            }
         }
-        
-        $last_modified = get_option('gtaw_github_last_modified', '');
-        if (!empty($last_modified)) {
-            $request_args['headers']['If-Modified-Since'] = $last_modified;
-        }
+        $this->skip_conditional_github_request = false;
         
         // Make the API request
         $response = wp_remote_get($api_url, $request_args);
@@ -144,8 +149,19 @@ class GTAW_Lightweight_Updater {
                 $this->last_api_response = $cached_data;
                 return $cached_data;
             }
-            // If we get 304 but have no cache, we need to fetch full data
-            // This shouldn't happen, but just in case...
+            if (!$this->github_304_retry_in_progress) {
+                $this->github_304_retry_in_progress = true;
+                update_option('gtaw_github_etag', '');
+                update_option('gtaw_github_last_modified', '');
+                $this->last_api_response = null;
+                $this->skip_conditional_github_request = true;
+                try {
+                    $retry_data = $this->get_release_data($force_refresh);
+                } finally {
+                    $this->github_304_retry_in_progress = false;
+                }
+                return $retry_data;
+            }
         }
         
         // Handle non-200 responses
@@ -219,12 +235,37 @@ class GTAW_Lightweight_Updater {
         ];
         
         // Store asset download URL if available
-        if (!empty($release_data['assets']) && !empty($release_data['assets'][0]['browser_download_url'])) {
-            $optimized['download_url'] = $release_data['assets'][0]['browser_download_url'];
-        } elseif (!empty($release_data['zipball_url'])) {
-            $optimized['download_url'] = $release_data['zipball_url'];
+        $download_url = '';
+        if (!empty($release_data['assets']) && is_array($release_data['assets'])) {
+            $first_zip = null;
+            $preferred  = null;
+            foreach ($release_data['assets'] as $asset) {
+                if (empty($asset['browser_download_url'])) {
+                    continue;
+                }
+                $name = isset($asset['name']) ? (string) $asset['name'] : '';
+                if (!preg_match('/\.zip$/i', $name)) {
+                    continue;
+                }
+                if ($first_zip === null) {
+                    $first_zip = $asset['browser_download_url'];
+                }
+                if ($preferred === null && preg_match('/gtaw|bridge/i', $name)) {
+                    $preferred = $asset['browser_download_url'];
+                }
+            }
+            $download_url = $preferred ?? $first_zip ?? '';
+            if ($download_url === '' && !empty($release_data['assets'][0]['browser_download_url'])) {
+                $download_url = $release_data['assets'][0]['browser_download_url'];
+            }
         }
-        
+        if ($download_url === '' && !empty($release_data['zipball_url'])) {
+            $download_url = $release_data['zipball_url'];
+        }
+        if ($download_url !== '') {
+            $optimized['download_url'] = $download_url;
+        }
+
         return $optimized;
     }
     
@@ -467,54 +508,32 @@ class GTAW_Lightweight_Updater {
     }
 }
 
-/**
- * Initialize the updater only when needed to minimize performance impact
- */
 function gtaw_init_lightweight_updater() {
-    // Only initialize in specific contexts where updates are checked
-    $load_updater = false;
-    
-    // Load on plugins.php page
-    global $pagenow;
-    if ($pagenow === 'plugins.php') {
-        $load_updater = true;
-    }
-    
-    // Load when WordPress is checking for updates
-    if (doing_action('wp_maybe_auto_update') || doing_action('upgrader_process_complete')) {
-        $load_updater = true;
-    }
-    
-    // Load during update API calls
-    if (isset($_REQUEST['action']) && in_array($_REQUEST['action'], ['plugin_information', 'update-plugin'])) {
-        $load_updater = true;
-    }
-    
-    // Check for transient updates
-    if (doing_action('pre_set_site_transient_update_plugins')) {
-        $load_updater = true;
-    }
-    
-    // Load when plugin update is forced
-    if (isset($_GET['force-check']) && $_GET['force-check'] == '1') {
-        $load_updater = true;
-    }
-    
-    // Allow other plugins to force load the updater
-    $load_updater = apply_filters('gtaw_load_updater', $load_updater);
-    
-    // Skip loading if not needed
-    if (!$load_updater) {
+    if (defined('GTAW_LIGHTWEIGHT_UPDATER_INIT')) {
         return;
     }
-    
-    // Initialize the updater
+
+    $settings = get_option('gtaw_update_settings', ['enable_updates' => true]);
+    if (!isset($settings['enable_updates']) || !$settings['enable_updates']) {
+        return;
+    }
+
+    $load = is_admin() || (defined('DOING_CRON') && DOING_CRON);
+    if (defined('WP_CLI') && WP_CLI) {
+        $load = true;
+    }
+    $load = apply_filters('gtaw_load_updater', $load);
+
+    if (!$load) {
+        return;
+    }
+
+    define('GTAW_LIGHTWEIGHT_UPDATER_INIT', true);
     $plugin_file = GTAW_BRIDGE_PLUGIN_DIR . 'gtaw-bridge.php';
     new GTAW_Lightweight_Updater($plugin_file);
 }
 
-// Hook into WordPress with low priority to let other essential functions run first
-add_action('plugins_loaded', 'gtaw_init_lightweight_updater', 30);
+add_action('plugins_loaded', 'gtaw_init_lightweight_updater', 5);
 
 /**
  * Register updater settings

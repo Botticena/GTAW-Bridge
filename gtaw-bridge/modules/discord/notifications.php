@@ -198,6 +198,7 @@ function gtaw_add_discord_checkout_field() {
                         type: 'POST',
                         data: {
                             action: 'gtaw_check_discord_membership',
+                            nonce: '<?php echo esc_js( wp_create_nonce( 'gtaw_discord_membership_check' ) ); ?>'
                         },
                         success: function(response) {
                             if (response.success && response.data.is_member) {
@@ -228,6 +229,7 @@ function gtaw_add_discord_checkout_field() {
                             type: 'POST',
                             data: {
                                 action: 'gtaw_check_discord_membership',
+                                nonce: '<?php echo esc_js( wp_create_nonce( 'gtaw_discord_membership_check' ) ); ?>'
                             },
                             success: function(response) {
                                 if (response.success && response.data.is_member) {

@@ -52,9 +52,8 @@ function gtaw_fleeca_gateway_init() {
             // Get gateway display name from settings or use default
             $this->title = isset($settings['gateway_name']) ? $settings['gateway_name'] : 'Fleeca Bank';
             $this->description = 'Pay securely using your Fleeca Bank account from GTA World.';
-            
-            // Optional icon (could be added in the future)
-            $this->icon = apply_filters('woocommerce_gtaw_fleeca_icon', '');
+
+            $this->icon = function_exists( 'gtaw_fleeca_get_logo_url' ) ? gtaw_fleeca_get_logo_url() : '';
             
             // Get API key from consolidated settings
             $this->api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
@@ -237,6 +236,16 @@ function gtaw_fleeca_gateway_init() {
         public function process_refund($order_id, $amount = null, $reason = '') {
             // Fleeca doesn't support automated refunds
             return new WP_Error('fleeca_refund_not_supported', __('Fleeca Bank does not support automated refunds. Please process the refund manually.', 'gtaw-bridge'));
+        }
+
+        public function get_icon() {
+            $url = is_string( $this->icon ) ? trim( $this->icon ) : '';
+            if ( $url === '' ) {
+                return parent::get_icon();
+            }
+            $alt  = esc_attr( $this->get_title() );
+            $html = '<img src="' . esc_url( $url ) . '" alt="' . $alt . '" class="gtaw-fleeca-checkout-icon" style="max-height:28px;width:auto;max-width:100px;vertical-align:middle;object-fit:contain;margin:0 0.45em 0 0;" />';
+            return apply_filters( 'woocommerce_gateway_icon', $html, $this->id );
         }
     }
     

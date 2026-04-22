@@ -894,9 +894,12 @@ function gtaw_get_discord_api_stats() {
 
 /**
  * Backward compatibility function for legacy code
- * 
+ *
  * @deprecated 2.0 Use gtaw_discord_send_message() instead
  */
 function gtaw_discord_api_send_message($channel_id, $content, $embeds = []) {
+    if (function_exists('_deprecated_function')) {
+        _deprecated_function(__FUNCTION__, '2.0.0', 'gtaw_discord_send_message');
+    }
     return gtaw_discord_send_message($channel_id, $content, $embeds);
 }

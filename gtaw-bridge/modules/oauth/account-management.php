@@ -461,20 +461,6 @@ function gtaw_hide_account_password_fields() {
 add_action('wp_head', 'gtaw_hide_account_password_fields');
 
 /**
- * Change "California" to "San Andreas" in WooCommerce states
- * 
- * @param array $states The states list
- * @return array Modified states
- */
-function gtaw_custom_woocommerce_states($states) {
-    $states['US'] = [
-        'SA' => 'San Andreas'
-    ];
-    return $states;
-}
-add_filter('woocommerce_states', 'gtaw_custom_woocommerce_states');
-
-/**
  * Set email field from Account Details "readonly" with proper event timing
  */
 function gtaw_make_email_field_readonly() {
@@ -504,32 +490,6 @@ function gtaw_make_email_field_readonly() {
     }
 }
 add_action('wp_footer', 'gtaw_make_email_field_readonly');
-
-/**
- * Remove Zip code and address second line, not needed anymore
- * 
- * @param array $fields The billing fields
- * @return array Modified fields
- */
-function gtaw_remove_billing_fields($fields) {
-    unset($fields['billing_postcode']);
-    unset($fields['billing_address_2']);
-    return $fields;
-}
-add_filter('woocommerce_billing_fields', 'gtaw_remove_billing_fields', 20, 1);
-
-/**
- * Remove zip code and second address line from shipping address
- * 
- * @param array $fields The shipping fields
- * @return array Modified fields
- */
-function gtaw_remove_shipping_fields($fields) {
-    unset($fields['shipping_postcode']);
-    unset($fields['shipping_address_2']);
-    return $fields;
-}
-add_filter('woocommerce_shipping_fields', 'gtaw_remove_shipping_fields', 20, 1);
 
 /**
  * Set email field from Checkout "readonly" with improved attributes

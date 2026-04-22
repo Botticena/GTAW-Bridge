@@ -1,3 +1,20 @@
+/* Notices (moved from top of wpbody into this slot on main dashboard) */
+.gtaw-bridge-notice-slot {
+    margin: 0 0 1rem 0;
+    clear: both;
+}
+.gtaw-bridge-notice-slot .notice,
+.gtaw-bridge-notice-slot .updated,
+.gtaw-bridge-notice-slot .error,
+.gtaw-bridge-notice-slot #message {
+    margin: 0 0 0.5em 0;
+}
+.gtaw-bridge-notice-slot .notice:last-child,
+.gtaw-bridge-notice-slot .updated:last-child,
+.gtaw-bridge-notice-slot #message:last-child {
+    margin-bottom: 0;
+}
+
 /* Dashboard Layout */
 .gtaw-dashboard-header {
     margin-bottom: 30px;

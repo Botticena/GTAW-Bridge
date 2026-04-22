@@ -6,6 +6,13 @@ defined('ABSPATH') or exit;
 define( 'GTAW_FLEECA_VERSION', '3.0' );
 define( 'GTAW_FLEECA_PATH', plugin_dir_path( __FILE__ ) . 'fleeca/' );
 
+function gtaw_fleeca_get_logo_url() {
+	if ( ! defined( 'GTAW_BRIDGE_PLUGIN_URL' ) ) {
+		return '';
+	}
+	$default = GTAW_BRIDGE_PLUGIN_URL . 'assets/img/fleeca.webp';
+	return (string) apply_filters( 'woocommerce_gtaw_fleeca_icon', $default );
+}
 
 function gtaw_fleeca_register_settings() {
     register_setting('gtaw_fleeca_settings_group', 'gtaw_fleeca_settings', [
@@ -252,94 +259,6 @@ function gtaw_fleeca_logs_tab() {
     echo gtaw_display_module_logs('fleeca', $logs_per_page, $page);
 }
 
-function gtaw_load_fleeca_submodules($conditional_loading = true) {
-    if ($conditional_loading && !gtaw_fleeca_should_load()) {
-        return;
-    }
-
-    if (file_exists(GTAW_FLEECA_PATH . 'core.php')) {
-        require_once GTAW_FLEECA_PATH . 'core.php';
-    }
-
-    $submodules = [
-        'gateway.php',
-        'callback-handler.php'
-    ];
-
-    foreach ($submodules as $submodule) {
-        if (file_exists(GTAW_FLEECA_PATH . $submodule)) {
-            require_once GTAW_FLEECA_PATH . $submodule;
-        }
-    }
-
-    if (is_admin() && file_exists(GTAW_FLEECA_PATH . 'guide.php')) {
-        require_once GTAW_FLEECA_PATH . 'guide.php';
-    }
-}
-
-function gtaw_fleeca_should_load() {
-    if (is_admin()) {
-        return true;
-    }
-
-    if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-        if ( ! empty( $_SERVER['REQUEST_URI'] ) && false !== strpos( (string) wp_unslash( $_SERVER['REQUEST_URI'] ), 'gtaw-bridge/v1/fleeca/webhook' ) ) {
-            return true;
-        }
-    }
-    if (defined('REST_REQUEST') || defined('DOING_AJAX')) {
-        if (defined('DOING_AJAX') && isset($_REQUEST['action'])) {
-            $fleeca_ajax_actions = [
-                'gtaw_fleeca_flush_rules',
-                'gtaw_fleeca_view_payment',
-                'gtaw_fleeca_reconcile',
-                'woocommerce_checkout',
-                'woocommerce_apply_coupon',
-                'woocommerce_remove_coupon',
-                'woocommerce_update_shipping_method',
-                'woocommerce_update_order_review'
-            ];
-            
-            return in_array($_REQUEST['action'], $fleeca_ajax_actions);
-        }
-        return false;
-    }
-
-    if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
-        $u    = (string) wp_unslash( $_SERVER['REQUEST_URI'] );
-        $path = (string) ( wp_parse_url( $u, PHP_URL_PATH ) ?? '' );
-        if ( false !== strpos( $path, '/fleeca/return' )
-            || false !== strpos( $path, '/fleeca/callback' )
-            || false !== strpos( $u, 'fleeca-return' )
-            || false !== strpos( $path, 'gtaw-fleeca/payment/complete' )
-        ) {
-            return true;
-        }
-    }
-
-    if (!did_action('wp')) {
-        return false;
-    }
-
-    if (function_exists('is_woocommerce') && is_woocommerce()) {
-        return true;
-    }
-    
-    if (function_exists('is_cart') && is_cart()) {
-        return true;
-    }
-    
-    if (function_exists('is_checkout') && is_checkout()) {
-        return true;
-    }
-    
-    if (function_exists('is_account_page') && is_account_page()) {
-        return true;
-    }
-
-    return false;
-}
-
 function gtaw_init_fleeca_module() {
     static $initialized = false;
     if ($initialized) {
@@ -373,6 +292,10 @@ function gtaw_init_fleeca_module() {
         require_once GTAW_FLEECA_PATH . 'gateway.php';
     }
 
+    if (file_exists(GTAW_FLEECA_PATH . 'blocks-payment-method.php')) {
+        require_once GTAW_FLEECA_PATH . 'blocks-payment-method.php';
+    }
+
     if (is_admin() && file_exists(GTAW_FLEECA_PATH . 'guide.php')) {
         require_once GTAW_FLEECA_PATH . 'guide.php';
     }
@@ -382,39 +305,20 @@ function gtaw_init_fleeca_module() {
 }
 add_action('plugins_loaded', 'gtaw_init_fleeca_module', 15);
 
-function gtaw_maybe_load_fleeca_gateway() {
-    if (class_exists('WC_Gateway_Fleeca')) {
+/**
+ * Enqueue optional Fleeca admin assets when present (avoids 404s if no custom CSS/JS is shipped).
+ */
+function gtaw_fleeca_admin_scripts($hook) {
+    if (!gtaw_is_plugin_page($hook, 'gtaw-fleeca')) {
         return;
     }
-
-    if (function_exists('is_woocommerce') && is_woocommerce() ||
-        function_exists('is_checkout') && is_checkout() ||
-        function_exists('is_cart') && is_cart() ||
-        function_exists('is_account_page') && is_account_page()) {
-        
-        if (file_exists(GTAW_FLEECA_PATH . 'gateway.php')) {
-            require_once GTAW_FLEECA_PATH . 'gateway.php';
-        }
-    }
-}
-
-function gtaw_fleeca_ajax_required() {
-    if (!isset($_REQUEST['action'])) {
-        return false;
-    }
-
-    $fleeca_ajax_actions = [
-        'gtaw_fleeca_flush_rules',
-        'gtaw_fleeca_view_payment',
-        'gtaw_fleeca_reconcile',
-    ];
-    
-    return in_array($_REQUEST['action'], $fleeca_ajax_actions);
-}
-
-function gtaw_fleeca_admin_scripts($hook) {
-    if (gtaw_is_plugin_page($hook, 'gtaw-fleeca')) {
+    $dir = defined('GTAW_BRIDGE_PLUGIN_DIR') ? GTAW_BRIDGE_PLUGIN_DIR : '';
+    $css = $dir . 'assets/css/gtaw-fleeca-admin.css';
+    $js  = $dir . 'assets/js/gtaw-fleeca-admin.js';
+    if ($dir && is_readable($css)) {
         wp_enqueue_style('gtaw-fleeca-admin-style', GTAW_BRIDGE_PLUGIN_URL . 'assets/css/gtaw-fleeca-admin.css', [], GTAW_FLEECA_VERSION);
+    }
+    if ($dir && is_readable($js)) {
         wp_enqueue_script('gtaw-fleeca-admin-script', GTAW_BRIDGE_PLUGIN_URL . 'assets/js/gtaw-fleeca-admin.js', ['jquery'], GTAW_FLEECA_VERSION, true);
     }
 }

@@ -3,6 +3,9 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+if ( ! isset( $gtaw_module_settings_updated ) ) {
+    $gtaw_module_settings_updated = false;
+}
 ?>
 <div class="wrap gtaw-dashboard">
     <div class="gtaw-dashboard-header">
@@ -17,8 +20,17 @@ if (!defined('ABSPATH')) {
                 <img src="<?php echo GTAW_BRIDGE_PLUGIN_URL; ?>assets/img/logo.webp" alt="GTA:W Bridge Logo" class="gtaw-hero-logo">
             </div>
         </div>
-        
-        <div class="gtaw-quick-info-panel">
+    </div>
+
+    <div id="gtaw-bridge-notice-slot" class="gtaw-bridge-notice-slot" aria-live="polite">
+    <?php if ( ! empty( $gtaw_module_settings_updated ) ) : ?>
+    <div class="notice notice-success is-dismissible" role="status">
+        <p><?php esc_html_e( 'Module settings saved.', 'gtaw-bridge' ); ?></p>
+    </div>
+    <?php endif; ?>
+    </div>
+
+    <div class="gtaw-quick-info-panel">
             <div class="gtaw-quick-info-section">
                 <span class="dashicons dashicons-book-alt gtaw-quick-info-icon"></span>
                 <div class="gtaw-quick-info-content">
@@ -60,9 +72,8 @@ if (!defined('ABSPATH')) {
                     <p>Need help? <a href="https://github.com/Botticena/GTAW-Bridge/issues" target="_blank">GitHub Issues</a></p>
                 </div>
             </div>
-        </div>
     </div>
-    
+
     <div class="gtaw-dashboard-main">
         <div class="gtaw-dashboard-modules">
             <h2>Module Management</h2>

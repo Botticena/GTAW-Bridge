@@ -103,7 +103,8 @@ function gtaw_discord_endpoint_content() {
                         url: "' . admin_url('admin-ajax.php') . '",
                         type: "POST",
                         data: {
-                            action: "gtaw_check_discord_membership"
+                            action: "gtaw_check_discord_membership",
+                            nonce: "' . esc_js( wp_create_nonce( 'gtaw_discord_membership_check' ) ) . '"
                         },
                         success: function(response) {
                             if (response.success) {
@@ -504,6 +505,10 @@ function gtaw_check_discord_server_membership() {
     // Verify user is logged in
     if (!is_user_logged_in()) {
         wp_send_json_error(['message' => 'Not logged in']);
+    }
+
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'gtaw_discord_membership_check')) {
+        wp_send_json_error(['message' => 'Invalid session'], 403);
     }
     
     $user_id = get_current_user_id();
