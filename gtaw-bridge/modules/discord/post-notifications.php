@@ -1,19 +1,8 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD POST NOTIFICATIONS MODULE ========= */
-/*
- * This module adds support for rich Discord embed notifications when new posts are published:
- * - Customizable embed structure per post type
- * - Different Discord channels per post type
- * - Role mentions for notifications
- * - Flexible content options
- * - Post type-specific fields
- */
+// Post publish -> Discord embeds, per post type settings.
 
-/* ========= ADMIN SETTINGS ========= */
-
-// Register post notification settings
 function gtaw_discord_register_post_notification_settings() {
     register_setting('gtaw_discord_post_notification_group', 'gtaw_discord_post_notifications', [
         'sanitize_callback' => 'gtaw_sanitize_post_notifications'
@@ -75,7 +64,7 @@ function gtaw_enqueue_discord_post_notification_assets($hook) {
     // Pass data to script
     wp_localize_script('gtaw-discord-post-notifications', 'gtaw_discord_post_notifications', array(
         'nonce' => wp_create_nonce('gtaw_discord_post_notification_nonce'),
-        'image_url' => plugins_url('assets/img/post-preview.webp', dirname(dirname(__FILE__)))
+        'image_url' => plugins_url( 'assets/img/post-preview.webp', GTAW_BRIDGE_PLUGIN_DIR . 'gtaw-bridge.php' ),
     ));
 }
 add_action('admin_enqueue_scripts', 'gtaw_enqueue_discord_post_notification_assets');
@@ -756,7 +745,6 @@ function gtaw_discord_post_notifications_tab() {
             const id = $(this).data('id');
             const $preview = $(this).find('.discord-embed-preview');
             
-            // Enhanced preview structure
             $preview.html(`
                 <div class="title" style="font-weight: bold; margin-bottom: 8px; font-size: 16px; color: white;">
                     ${$preview.find('div:first').text()}
@@ -852,7 +840,6 @@ function gtaw_get_post_categories_callback() {
 }
 add_action('wp_ajax_gtaw_get_post_categories', 'gtaw_get_post_categories_callback');
 
-/* ========= NOTIFICATION PROCESSING ========= */
 
 /**
  * Process post data for Discord embed

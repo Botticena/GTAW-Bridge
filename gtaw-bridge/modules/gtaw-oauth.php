@@ -1,21 +1,11 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= OAUTH MODULE MAIN FILE ========= */
-/*
- * This file serves as the entry point for the OAuth module.
- * It handles:
- * - Core settings registration
- * - Admin menu setup
- * - Tab navigation
- * - Loading all OAuth submodules
- */
+// OAuth: settings page, submodules, shortcodes (see init hooks).
 
-// Define the OAUTH module constants
 define('GTAW_OAUTH_VERSION', '2.0');
 define('GTAW_OAUTH_PATH', plugin_dir_path(__FILE__) . 'oauth/');
 
-/* ========= CONSOLIDATED SETTINGS ========= */
 
 /**
  * Register OAuth consolidated settings
@@ -135,8 +125,6 @@ function gtaw_oauth_migrate_settings() {
     if (get_option('gtaw_oauth_settings_migrated', false)) {
         return;
     }
-    
-    // Start performance tracking
     gtaw_perf_start('oauth_settings_migration');
     
     // Get existing individual settings
@@ -153,15 +141,12 @@ function gtaw_oauth_migrate_settings() {
     
     // Mark as migrated
     update_option('gtaw_oauth_settings_migrated', true);
-    
-    // End performance tracking
     gtaw_perf_end('oauth_settings_migration', true);
     
     // Log the migration
     gtaw_add_log('oauth', 'Migration', 'Migrated individual settings to consolidated format', 'success');
 }
 
-/* ========= ADMIN MENU SETUP ========= */
 
 /**
  * Add OAuth Settings submenu under the main GTA:W Bridge menu
@@ -224,26 +209,19 @@ function gtaw_oauth_settings_page_callback() {
     <?php
 }
 
-/**
- * Main settings tab content using the enhanced utilities
- */
 function gtaw_oauth_settings_tab() {
-    // Get consolidated settings
     $settings = get_option('gtaw_oauth_settings', gtaw_oauth_default_settings());
-    
-    // Generate default callback URL if needed
+
     $default_oauth_callback = site_url('?gta_oauth=callback');
     $oauth_callback_url = !empty($settings['callback_url']) ? $settings['callback_url'] : $default_oauth_callback;
-    
-    // Generate the login link
+
     $login_link = add_query_arg([
         'client_id'     => $settings['client_id'],
         'redirect_uri'  => urlencode($oauth_callback_url),
         'response_type' => 'code',
         'scope'         => ''
     ], 'https://ucp.gta.world/oauth/authorize');
-    
-    // Settings form fields
+
     $fields = [
         [
             'type' => 'text',
@@ -287,32 +265,18 @@ function gtaw_oauth_settings_tab() {
             'description' => 'Use this link directly or embed it with the shortcode <code>[gtaw_login]</code>.'
         ]
     ];
-    
-    // Generate the settings form
+
     echo gtaw_generate_settings_form('gtaw_oauth_settings_group', $fields, 'Save OAuth Settings');
 }
 
-/**
- * Logs tab using the enhanced utility function
- */
 function gtaw_oauth_logs_tab() {
-    // Get current page from URL
     $page = isset($_GET['logs_page']) ? max(1, intval($_GET['logs_page'])) : 1;
-    
-    // Get logs per page from URL or use the saved setting
+
     $logs_per_page = isset($_GET['logs_per_page']) ? absint($_GET['logs_per_page']) : gtaw_get_logs_per_page();
-    
-    // Display the logs
+
     echo gtaw_display_module_logs('oauth', $logs_per_page, $page);
 }
 
-/* ========= SUBMODULE LOADER ========= */
-
-/**
- * Load OAuth submodules efficiently with lazy loading option
- *
- * @param bool $lazy_load Whether to use lazy loading (default: false)
- */
 function gtaw_load_oauth_submodules($lazy_load = false) {
     // Don't load oAuth module on login page for better performance
     global $pagenow;
@@ -397,20 +361,45 @@ function gtaw_init_oauth_module() {
     // Run settings migration
     gtaw_oauth_migrate_settings();
     
-    // Check if the OAuth module is enabled
-    if (gtaw_oauth_get_setting('enabled', true)) {
-        // Start performance tracking
-        gtaw_perf_start('oauth_module_load');
-        
-        // Load submodules - use traditional loading for backward compatibility
-        // @todo In future versions, enable lazy loading by passing true to this function
-        gtaw_load_oauth_submodules(false);
-        
-        // End performance tracking
-        gtaw_perf_end('oauth_module_load', true);
+    if ( ! gtaw_oauth_get_setting( 'enabled', true ) ) {
+        // Module disabled: still register shortcodes on init so [gtaw_login] does not show raw in content.
+        add_action( 'init', 'gtaw_oauth_register_shortcodes_module_disabled', 4 );
+        return;
     }
+    gtaw_perf_start( 'oauth_module_load' );
+
+    // Load submodules (shortcodes register on init — see shortcodes.php).
+    gtaw_load_oauth_submodules( false );
+
+    gtaw_perf_end( 'oauth_module_load', true );
 }
 add_action('plugins_loaded', 'gtaw_init_oauth_module', 11); // Priority 11 to load after main plugin
+
+/**
+ * When OAuth is turned off in settings, register minimal shortcodes with an admin notice.
+ */
+function gtaw_oauth_register_shortcodes_module_disabled() {
+    if ( ! function_exists( 'gtaw_oauth_render_module_disabled_message' ) ) {
+        /**
+         * @return string
+         */
+        function gtaw_oauth_render_module_disabled_message() {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return '';
+            }
+            return '<p class="gtaw-oauth-off">' . esc_html__( 'GTA:W OAuth is disabled in the OAuth module settings.', 'gtaw-bridge' ) . '</p>';
+        }
+    }
+    $cb = 'gtaw_oauth_render_module_disabled_message';
+    add_shortcode( 'gtaw_login', $cb );
+    add_shortcode( 'gtaw_login_button', $cb );
+    add_shortcode( 'gtaw_login_logout', $cb );
+    add_shortcode( 'gtaw_user_info', $cb );
+    add_shortcode( 'gtaw_if_logged_in', $cb );
+    add_shortcode( 'gtaw_if_not_logged_in', $cb );
+    add_shortcode( 'gtaw_character_info', $cb );
+    add_shortcode( 'gtaw_character_details', $cb );
+}
 
 /**
  * Conditionally load admin-specific scripts and styles

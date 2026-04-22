@@ -349,7 +349,7 @@ class GTAW_Lightweight_Updater {
         // Normalize version
         $release_version = $this->normalize_version($release_data['tag_name']);
         
-        // Convert markdown to HTML more efficiently
+        // md -> html (regex based, good enough for release notes)
         $html_release_notes = $this->process_markdown($release_data['body']);
         
         // Create plugin info object
@@ -378,7 +378,7 @@ class GTAW_Lightweight_Updater {
     }
     
     /**
-     * Process markdown to HTML more efficiently
+     * Cheap markdown-ish parser for GitHub bodies
      *
      * @param string $markdown The markdown content
      * @return string HTML content

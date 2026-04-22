@@ -1,11 +1,11 @@
-# GTA:W WordPress Bridge v1.1
+# GTA:W WordPress Bridge v1.2
 
-[![Version](https://img.shields.io/badge/version-1.1-blue.svg)](https://github.com/Botticena/gtaw-bridge)
+[![Version](https://img.shields.io/badge/version-1.2-blue.svg)](https://github.com/Botticena/GTAW-Bridge)
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-GPL--2.0-green.svg)](LICENSE)
 
-**GTA:W WordPress Bridge v1.1** seamlessly integrates your WordPress site with the GTA:World Roleplay platform. This modular plugin provides comprehensive integration including OAuth authentication, Discord synchronization, and Fleeca Bank payment processing.
+**GTA:W WordPress Bridge v1.2** seamlessly integrates your WordPress site with the GTA:World Roleplay platform. This modular plugin provides comprehensive integration including OAuth authentication, Discord synchronization, and Fleeca Bank payment processing.
 
 ---
 
@@ -35,7 +35,7 @@
 
 ### 💳 **Fleeca Bank Module** (Default: Disabled)
 - WooCommerce payment gateway integration
-- In-game payment processing
+- Payment processing (Merchant API v2)
 - Automatic order status updates
 - Comprehensive transaction logging
 
@@ -98,7 +98,7 @@ Use the `[gtaw_login]` shortcode in pages or posts to display the GTA:W login li
 ## 📖 Usage Guide
 
 ### 🔐 OAuth Authentication
-When users click the GTA:W login link, they're redirected to authenticate via GTA:W. Upon successful authentication, the plugin automatically creates or links their WordPress account based on the selected in-game character.
+When users click the GTA:W login link, they're redirected to authenticate via GTA:W. Upon successful authentication, the plugin automatically creates or links their WordPress account based on the selected character.
 
 ### 💬 Discord Integration
 - **Account Linking:** Users can link Discord accounts to WordPress accounts
@@ -124,7 +124,7 @@ When users click the GTA:W login link, they're redirected to authenticate via GT
 The plugin uses a modular architecture allowing you to enable only the features you need:
 
 ```
-GTA:W Bridge v1.1
+GTA:W Bridge v1.2
 ├── 🔐 OAuth Module (Default: Enabled)
 │   ├── Authentication & Token Management
 │   ├── Character-based Account Creation
@@ -145,42 +145,35 @@ GTA:W Bridge v1.1
 
 ## 📊 Changelog
 
+### **v1.2** - Fleeca Merchant API v2 & polish
+- **💳 Fleeca v2** – Hosted checkout, HMAC webhooks, browser return with `payment_id`; **Callback** / **Return** URLs for the Merchant Center; optional rewrite flush when permalinks change
+- **🛒 WooCommerce** – Clearer checkout notices; Fleeca metadata on orders; admin reconcile / API view tools; WooCommerce admin nag **only** if Fleeca is enabled
+- **🔐 OAuth & Discord** – Shortcodes register on `init` (block themes); safe placeholders when a module is off (no raw `[shortcode]` text)
+- **🔒 Fixes** – Log-clear AJAX nonce; OAuth callback skipped when OAuth is disabled; settings forms read nested options; Discord role-sync cron cleared on deactivate; one-time removal of legacy Fleeca v1 keys
+
 ### **v1.1** - Major Update 🎉
-- **🏗️ Modular Architecture** – Complete restructure with independent modules (OAuth, Discord, Fleeca Bank)
-- **💬 Discord Integration** – Full Discord OAuth, role mapping, notifications, and member management
-- **💳 Fleeca Bank Payment Gateway** – WooCommerce integration for in-game payment processing
-- **📊 Enhanced Logging System** – Database-backed logging with advanced filtering, pagination, and CSV export
-- **🎨 Modern Admin Dashboard** – Beautiful interface with module management and activity monitoring
-- **⚡ Performance Optimizations** – Intelligent caching, lazy loading, and performance monitoring
-- **🔒 Enhanced Security** – Improved nonce handling, capability checks, and data sanitization
-- **🎛️ Module Management** – Enable/disable modules independently based on needs
-- **⚙️ Advanced Settings** – Consolidated settings with backward compatibility
-- **🌐 API Framework** – Robust API request handling with rate limiting and error recovery
+- **🏗️ Modular architecture** – OAuth, Discord, and Fleeca as separate modules you can turn on or off
+- **💬 Discord** – OAuth linking, role mapping, notifications (posts, orders, store), member UI
+- **💳 Fleeca** – WooCommerce payment gateway
+- **📊 Logging & dashboard** – Database logs (filter, paginate, export CSV); central bridge dashboard
+- **⚙️ Settings & API** – Consolidated options with legacy compatibility; shared HTTP helpers, caching, and tighter permission/sanitization checks
 
 ### **v1.0** - Initial Release
-- **🔐 GTA:W OAuth Integration** – Enables authentication via GTA:W accounts
-- **👤 Character-Based WordPress Accounts** – Each character is treated as a separate WP user
-- **🛒 WooCommerce Compatibility** – Ensures smooth integration with WooCommerce
-- **🖥️ OAuth Login Modal** – Displays a modal for new and returning users
-- **🆕 First Login Flow** – Users select a character to create their WP account
-- **🔄 Returning User Flow** – Allows existing users to log in or register additional characters
-- **🔄 Account Switching** – Users can switch between their linked character accounts
-- **⚙️ Admin Settings Page** – Configure OAuth credentials in the WP admin panel
-- **🔒 Secure Authentication** – Stores OAuth credentials securely
-- **📝 Custom Shortcode** – `[gtaw_login]` shortcode to embed login links anywhere
-- **🔄 GitHub Updater** – Seamless updates from repository
+- **🔐 GTA:W OAuth** – Login via UCP; modal for new vs returning users; pick a character to create a WP user; link multiple characters and switch between them
+- **🛒 WooCommerce** – Works alongside WooCommerce-powered sites
+- **⚙️ Admin & updates** – OAuth credentials in WP admin; **`[gtaw_login]`** shortcode; updates from GitHub
 
 ---
 
 ## 🆘 Support & Documentation
 
 ### 📚 Built-in Documentation
-- **📖 Module Guides** - Each module includes a comprehensive "Guide" tab with setup instructions and troubleshooting
-- **🎛️ Admin Dashboard** - Access all documentation directly from the WordPress admin interface
-- **📊 Activity Logs** - Detailed logging and monitoring for all modules
+- **📖 Module Guides** - Each module has a **Guide** tab (setup, testing, help)
+- **🎛️ Admin Dashboard** - Turn features on and open settings from one place
+- **📊 Activity Logs** - See what happened if something needs checking
 
 ### 🆘 Getting Help
-- **🐛 Issues & Bugs:** [GitHub Issues](https://github.com/Botticena/gtaw-bridge/issues)
+- **🐛 Issues & Bugs:** [GitHub Issues](https://github.com/Botticena/GTAW-Bridge/issues)
 - **💬 Contact:** [GTA:W Forums](https://forum.gta.world/en/profile/56418-lena/)
 - **📖 Plugin Thread:** [GTA:W Plugin Discussion](https://forum.gta.world/en/topic/141314-guide-gtaw-oauth-wordpress-plugin/)
 
@@ -214,7 +207,7 @@ This project is licensed under the [GPL-2.0](LICENSE) license.
 
 **Created with ❤️ by [Lena](https://forum.gta.world/en/profile/56418-lena/) for the GTA:W Community**
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/Botticena/gtaw-bridge)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/Botticena/GTAW-Bridge)
 [![GTA:W Forums](https://img.shields.io/badge/GTA:W-Forums-blue?style=for-the-badge)](https://forum.gta.world/)
 
 </div>

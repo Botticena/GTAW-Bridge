@@ -1,26 +1,14 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD CUSTOMER NOTIFICATIONS MODULE ========= */
-/*
- * This module handles customer order notifications via Discord:
- * - Order status change notifications
- * - Notification templates
- * - Checkout Discord integration
- */
+// Buyer order status -> Discord DMs / channel.
 
-/* ========= ADMIN SETTINGS ========= */
-
-// Register Discord notification settings
 function gtaw_discord_register_notification_settings() {
-    // Register the templates settings group
     add_option('gtaw_discord_templates_group');
-    
-    // Register the mandatory notifications setting
+
     register_setting('gtaw_discord_templates_group', 'gtaw_discord_notifications_mandatory');
     register_setting('gtaw_discord_templates_group', 'gtaw_discord_channel_id');
-    
-    // Get all WooCommerce order statuses to dynamically register all settings
+
     $statuses = wc_get_order_statuses();
     foreach ($statuses as $status_key => $status_label) {
         $clean_key = str_replace('wc-', '', $status_key);
@@ -152,7 +140,6 @@ add_filter('gtaw_discord_settings_tabs', function($tabs) {
     return $tabs;
 });
 
-/* ========= CHECKOUT INTEGRATION ========= */
 
 // Add Discord notification opt-in to WooCommerce checkout
 function gtaw_add_discord_checkout_field() {
@@ -309,7 +296,6 @@ function gtaw_display_discord_notification_order($order) {
 }
 add_action('woocommerce_admin_order_data_after_billing_address', 'gtaw_display_discord_notification_order', 10, 1);
 
-/* ========= NOTIFICATION SENDING ========= */
 
 // Function to process template shortcodes
 function gtaw_process_discord_template($template, $order) {

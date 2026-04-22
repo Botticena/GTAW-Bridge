@@ -1,20 +1,9 @@
 <?php
 defined('ABSPATH') or exit;
 
-/**
- * Enhanced Logging System for GTAW Bridge
- * 
- * Provides a high-performance, database-backed logging system with backward
- * compatibility for existing implementations.
- * 
- * @version 2.0 - Optimized with database storage instead of options API
- */
+// DB log table + migration from old option-based logs.
 
-/**
- * Initialize the logging system, creating the database table if needed
- */
 function gtaw_logging_init() {
-    // Only create table if it doesn't exist
     if (!gtaw_logging_table_exists()) {
         gtaw_create_logs_table();
     }
@@ -501,6 +490,10 @@ function gtaw_count_logs_db($module, $filters = array()) {
 function gtaw_clear_logs_handler() {
     if (!current_user_can('manage_options')) {
         wp_send_json_error("Permission denied.");
+    }
+
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'gtaw_clear_logs_nonce')) {
+        wp_send_json_error('Invalid security token.');
     }
 
     if (!isset($_POST['module'])) {

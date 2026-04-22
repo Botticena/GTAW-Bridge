@@ -1,9 +1,5 @@
-/**
- * GTAW Bridge Discord Post Notifications
- * Handles post notification template management in the admin interface
- */
+// Discord post notification rows + live embed preview in admin.
 jQuery(document).ready(function($) {
-    // Generate unique ID for templates
     function generateUniqueId() {
         return 'n' + Date.now() + Math.floor(Math.random() * 1000);
     }

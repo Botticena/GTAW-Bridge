@@ -1,13 +1,7 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD MEMBER CARD MODULE ========= */
-/*
- * This module adds Discord role display to user profiles:
- * - Shows Discord roles on My Account page
- * - Adds Discord information to admin user profiles
- * - Provides role sync controls for admins
- */
+// Show linked Discord roles on profile / account.
 
 /**
  * Add Discord roles to the My Account page

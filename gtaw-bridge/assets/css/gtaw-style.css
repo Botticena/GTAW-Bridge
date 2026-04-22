@@ -42,7 +42,7 @@
     padding-left: var(--checkout-box-padding-side);
     padding-right: var(--checkout-box-padding-side);
     display: -ms-flexbox;
-    display: flex
+    display: flex;
     -webkit-box-align: center;
     align-items: center;
 }

@@ -1,41 +1,21 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= OAUTH ACCOUNT MANAGEMENT MODULE ========= */
-/*
- * This module handles user account management:
- * - User profile modifications with enhanced display
- * - Character linking/switching with improved security
- * - Account status utilities with performance optimizations
- * - WooCommerce integration with better UX
- * 
- * @since 2.0 Added performance tracking and improved security
- */
+// Profile extra fields, character shortcode, login/register tweaks, WC email.
 
-/**
- * Adds custom user profile fields for GTA:W data with enhanced display
- *
- * @param WP_User $user The user object being edited
- * @since 2.0 Added additional character information and improved formatting
- */
 function gtaw_add_user_profile_fields($user) {
-    // Start performance tracking
     gtaw_perf_start('profile_fields_render');
     
-    // Get the GTA:W user ID and character data
     $gtaw_user_id = get_user_meta($user->ID, 'gtaw_user_id', true);
     $character = get_user_meta($user->ID, 'active_gtaw_character', true);
-    
-    // Get all available characters for this user
+
     $available_characters = get_user_meta($user->ID, 'gtaw_available_characters', true);
-    
-    // Exit if no GTA:W connection
+
     if (empty($gtaw_user_id)) {
         gtaw_perf_end('profile_fields_render');
         return;
     }
     
-    // Calculate account connection time
     $connection_time = get_user_meta($user->ID, 'gtaw_last_connection', true);
     $connection_status = empty($connection_time) ? 'Unknown' : human_time_diff($connection_time) . ' ago';
     
@@ -101,25 +81,16 @@ function gtaw_add_user_profile_fields($user) {
         <?php endif; ?>
     </table>
     <?php
-    
-    // End performance tracking
     gtaw_perf_end('profile_fields_render');
 }
 add_action('show_user_profile', 'gtaw_add_user_profile_fields');
 add_action('edit_user_profile', 'gtaw_add_user_profile_fields');
 
-/**
- * AJAX handler for admin to reset a user's GTA:W connection
- * 
- * @since 2.0 New function for admin management
- */
 function gtaw_admin_reset_connection_callback() {
-    // Security check with the enhanced utilities
     if (!gtaw_ajax_security_check('oauth', 'nonce', 'gtaw_admin_reset_connection', 'manage_options', 'reset connection')) {
         return;
     }
     
-    // Get user ID
     $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
     
     if (empty($user_id)) {
@@ -127,7 +98,6 @@ function gtaw_admin_reset_connection_callback() {
         return;
     }
     
-    // Perform the reset with the dedicated function
     $result = gtaw_reset_gtaw_connection($user_id);
     
     if ($result) {
@@ -138,15 +108,7 @@ function gtaw_admin_reset_connection_callback() {
 }
 add_action('wp_ajax_gtaw_admin_reset_connection', 'gtaw_admin_reset_connection_callback');
 
-/**
- * Adds a shortcode to display character information with enhanced UI
- *
- * @param array $atts Shortcode attributes
- * @return string HTML output for character information
- * @since 2.0 Added styling options and more character details
- */
 function gtaw_character_info_shortcode($atts = []) {
-    // Process attributes
     $atts = shortcode_atts([
         'style' => 'default', // default, compact, or expanded
         'show_id' => 'yes',
@@ -156,8 +118,6 @@ function gtaw_character_info_shortcode($atts = []) {
     if (!is_user_logged_in()) {
         return '<p>You must be logged in to view your character information.</p>';
     }
-    
-    // Start performance tracking
     gtaw_perf_start('character_info_shortcode');
     
     $user_id = get_current_user_id();
@@ -227,30 +187,18 @@ function gtaw_character_info_shortcode($atts = []) {
     }
     
     $output .= '</div>';
-    
-    // End performance tracking
     gtaw_perf_end('character_info_shortcode');
     
     return $output;
 }
-add_shortcode('gtaw_character_info', 'gtaw_character_info_shortcode');
 
-/**
- * Block normal WordPress registration if OAuth is enabled with improved messaging
- * 
- * @since 2.0 Enhanced redirect with clear messaging
- */
 function gtaw_block_wp_registration() {
-    // Check if OAuth is enabled using the consolidated setting
     if (gtaw_oauth_get_setting('enabled', true)) {
-        // Check if this is the registration page
         global $pagenow;
         if ($pagenow == 'wp-login.php' && isset($_GET['action']) && $_GET['action'] == 'register') {
-            // Get the login URL
             $login_link = gtaw_get_oauth_url();
-            
+
             if (!empty($login_link)) {
-                // Add a message parameter
                 wp_redirect(add_query_arg('registration_method', 'gtaw', $login_link));
                 exit;
             }
@@ -259,25 +207,17 @@ function gtaw_block_wp_registration() {
 }
 add_action('init', 'gtaw_block_wp_registration');
 
-/**
- * Modify the login form to include the GTA:W login option with improved styling
- * 
- * @since 2.0 Enhanced UI with responsive design
- */
 function gtaw_modify_login_form() {
-    // Only show if OAuth is enabled
     if (gtaw_oauth_get_setting('enabled', true)) {
         $login_link = gtaw_get_oauth_url();
         
         if (!empty($login_link)) {
-            // Display any registration message
             if (isset($_GET['registration_method']) && $_GET['registration_method'] === 'gtaw') {
                 echo '<div class="message" style="background: #f8f8f8; border-left: 4px solid #2271b1; padding: 10px 15px; margin: 20px 0; border-radius: 3px;">';
                 echo 'Standard registration is disabled. Please use GTA:W authentication to create an account.';
                 echo '</div>';
             }
             
-            // Enhanced button style
             echo '<div style="text-align: center; margin: 20px 0; padding: 10px; background: #f8f8f8; border-radius: 4px;">';
             echo '<p style="margin-bottom: 10px; font-size: 14px;">Log in with your GTA:W account:</p>';
             echo '<a href="' . esc_url($login_link) . '" class="button button-primary" style="margin: 0 auto; display: inline-block; padding: 5px 15px; background: #0085ba; color: white; text-decoration: none; border-radius: 3px; border: 1px solid #006799; font-size: 13px; line-height: 2; width: 100%; max-width: 240px; box-sizing: border-box; text-align: center;">';
@@ -290,22 +230,13 @@ function gtaw_modify_login_form() {
 add_action('login_form', 'gtaw_modify_login_form');
 add_action('register_form', 'gtaw_modify_login_form');
 
-/**
- * Add a widget to the WooCommerce dashboard showing GTA:W character info
- * Enhanced version with better UI and functionality
- * 
- * @since 2.0 Improved styling and security
- */
 function gtaw_add_woocommerce_dashboard_widget() {
-    // This function is deprecated in favor of the more comprehensive character switcher
-    // in character-switching.php, but kept for backward compatibility
-    
-    // Skip if not appropriate
+    // legacy: superseded by gtaw_add_character_switcher when thats hooked
+
     if (!is_user_logged_in() || !function_exists('is_account_page') || !is_account_page()) {
         return;
     }
     
-    // Check if the new character switcher is active to avoid duplication
     if (has_action('woocommerce_account_dashboard', 'gtaw_add_character_switcher')) {
         return;
     }
@@ -317,8 +248,6 @@ function gtaw_add_woocommerce_dashboard_widget() {
     if (empty($character)) {
         return;
     }
-    
-    // Start performance tracking
     gtaw_perf_start('dashboard_widget');
     
     ?>
@@ -401,8 +330,6 @@ function gtaw_add_woocommerce_dashboard_widget() {
         <?php endif; ?>
     </div>
     <?php
-    
-    // End performance tracking
     gtaw_perf_end('dashboard_widget');
 }
 add_action('woocommerce_account_dashboard', 'gtaw_add_woocommerce_dashboard_widget');
@@ -437,38 +364,25 @@ function gtaw_is_user_linked_to_gtaw($user_id) {
     return $is_linked;
 }
 
-/**
- * Reset a user's GTA:W connection with improved security and logging
- *
- * @param int $user_id The WordPress user ID
- * @return bool True on success
- * @since 2.0 Added confirmation and enhanced logging
- */
 function gtaw_reset_gtaw_connection($user_id) {
-    // Start performance tracking
     gtaw_perf_start('reset_connection');
     
-    // Security check - only admins or the user themselves
     if (!current_user_can('edit_users') && get_current_user_id() != $user_id) {
         gtaw_add_log('oauth', 'Security', "Unauthorized attempt to reset connection for user ID: $user_id", 'error');
         gtaw_perf_end('reset_connection');
         return false;
     }
     
-    // Store data for logging
     $gtaw_user_id = get_user_meta($user_id, 'gtaw_user_id', true);
     $character = get_user_meta($user_id, 'active_gtaw_character', true);
     
-    // Delete all GTAW related metadata
     delete_user_meta($user_id, 'gtaw_user_id');
     delete_user_meta($user_id, 'active_gtaw_character');
     delete_user_meta($user_id, 'gtaw_available_characters');
     delete_user_meta($user_id, 'gtaw_last_connection');
     
-    // Clear relevant caches
     wp_cache_delete('gtaw_user_linked_' . $user_id, 'gtaw');
-    
-    // Log action with detailed info
+
     $character_info = '';
     if (!empty($character) && isset($character['firstname']) && isset($character['lastname'])) {
         $character_info = " ({$character['firstname']} {$character['lastname']}, ID: {$character['id']})";
@@ -480,14 +394,11 @@ function gtaw_reset_gtaw_connection($user_id) {
         "GTA:W connection reset for user ID: $user_id, GTA:W ID: $gtaw_user_id$character_info", 
         'success'
     );
-    
-    // End performance tracking
     gtaw_perf_end('reset_connection');
     
     return true;
 }
 
-/* ========= WOOCOMMERCE INTEGRATION MODIFICATIONS ========= */
 
 /**
  * Remove password fields from account details form with better organization

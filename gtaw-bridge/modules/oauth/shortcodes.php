@@ -1,14 +1,7 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= OAUTH SHORTCODES MODULE ========= */
-/*
- * This module provides shortcodes for embedding OAuth functionality:
- * - Login button with enhanced styling options
- * - User status display with improved formatting
- * - Character information display
- * - Conditional content display based on login status
- */
+// [gtaw_login] etc. — see gtaw_oauth_register_shortcodes on init.
 
 /**
  * Shortcode for generating the GTA:W login link
@@ -16,27 +9,20 @@ defined('ABSPATH') or exit;
  * @return string HTML for the login link
  */
 function gtaw_login_shortcode() {
-    // Get settings for the OAuth URL
-    $client_id = get_option('gtaw_client_id');
-    if (empty($client_id)) {
-        return '<p>Please set your GTA:W Client ID in the OAuth settings.</p>';
+    $callback = (string) gtaw_oauth_get_setting( 'callback_url', '' );
+    if ( '' === $callback ) {
+        $callback = (string) get_option( 'gtaw_callback_url', '' );
     }
-    
-    $callback = get_option('gtaw_callback_url');
-    if (empty($callback)) {
-        $callback = add_query_arg(['gta_oauth' => 'callback'], site_url());
+    if ( '' === $callback ) {
+        $callback = site_url( '?gta_oauth=callback' );
     }
-    
-    $auth_url = add_query_arg([
-        'client_id'     => $client_id,
-        'redirect_uri'  => urlencode($callback),
-        'response_type' => 'code',
-        'scope'         => ''
-    ], 'https://ucp.gta.world/oauth/authorize');
-    
-    return '<a href="' . esc_url($auth_url) . '" class="gtaw-login-button">Login / Create Account via GTA:W</a>';
+    $auth_url = function_exists( 'gtaw_oauth_get_authorize_url' ) ? gtaw_oauth_get_authorize_url( $callback ) : '';
+    if ( '' === $auth_url ) {
+        $msg = __( 'GTA:W login is not configured. Add your Client ID in GTA:W Bridge → OAuth Module.', 'gtaw-bridge' );
+        return current_user_can( 'manage_options' ) ? '<p class="gtaw-oauth-missing">' . esc_html( $msg ) . '</p>' : '';
+    }
+    return '<a href="' . esc_url( $auth_url ) . '" class="gtaw-login-button">' . esc_html__( 'Login / Create Account via GTA:W', 'gtaw-bridge' ) . '</a>';
 }
-add_shortcode('gtaw_login', 'gtaw_login_shortcode');
 
 /**
  * Shortcode for a styled GTA:W login button
@@ -54,30 +40,26 @@ function gtaw_login_button_shortcode($atts) {
         'width' => '' // empty for auto, or CSS value like '200px'
     ], $atts);
     
-    // Get settings for the OAuth URL
-    $client_id = get_option('gtaw_client_id');
-    if (empty($client_id)) {
-        return '<p>Please set your GTA:W Client ID in the OAuth settings.</p>';
+    $callback = (string) gtaw_oauth_get_setting( 'callback_url', '' );
+    if ( '' === $callback ) {
+        $callback = (string) get_option( 'gtaw_callback_url', '' );
     }
-    
-    $callback = get_option('gtaw_callback_url');
-    if (empty($callback)) {
-        $callback = add_query_arg(['gta_oauth' => 'callback'], site_url());
+    if ( '' === $callback ) {
+        $callback = site_url( '?gta_oauth=callback' );
     }
-    
+
     // If a custom redirect is specified, store it in a transient
-    if (!empty($atts['redirect'])) {
-        $redirect_key = 'gtaw_redirect_' . md5(time() . rand());
-        set_transient($redirect_key, $atts['redirect'], HOUR_IN_SECONDS);
-        $callback = add_query_arg(['gtaw_redirect_key' => $redirect_key], $callback);
+    if ( ! empty( $atts['redirect'] ) ) {
+        $redirect_key = 'gtaw_r_' . wp_generate_password( 12, false, false );
+        set_transient( $redirect_key, $atts['redirect'], HOUR_IN_SECONDS );
+        $callback = add_query_arg( [ 'gtaw_redirect_key' => $redirect_key ], $callback );
     }
-    
-    $auth_url = add_query_arg([
-        'client_id'     => $client_id,
-        'redirect_uri'  => urlencode($callback),
-        'response_type' => 'code',
-        'scope'         => ''
-    ], 'https://ucp.gta.world/oauth/authorize');
+
+    $auth_url = function_exists( 'gtaw_oauth_get_authorize_url' ) ? gtaw_oauth_get_authorize_url( $callback ) : '';
+    if ( '' === $auth_url ) {
+        $msg = __( 'GTA:W login is not configured. Add your Client ID in GTA:W Bridge → OAuth Module.', 'gtaw-bridge' );
+        return current_user_can( 'manage_options' ) ? '<p class="gtaw-oauth-missing">' . esc_html( $msg ) . '</p>' : '';
+    }
     
     // Determine button style and class
     $style_class = $atts['class'];
@@ -175,7 +157,6 @@ function gtaw_login_button_shortcode($atts) {
     return '<a href="' . esc_url($auth_url) . '" class="' . esc_attr($style_class) . '">' . 
         $icon_html . esc_html($atts['text']) . '</a>';
 }
-add_shortcode('gtaw_login_button', 'gtaw_login_button_shortcode');
 
 /**
  * Shortcode to display the currently logged-in user's GTA:W character information
@@ -240,7 +221,6 @@ function gtaw_user_info_shortcode($atts) {
     
     return $output;
 }
-add_shortcode('gtaw_user_info', 'gtaw_user_info_shortcode');
 
 /**
  * Shortcode to conditionally display content based on GTA:W login status
@@ -268,7 +248,6 @@ function gtaw_if_logged_in_shortcode($atts, $content = null) {
     
     return do_shortcode($content);
 }
-add_shortcode('gtaw_if_logged_in', 'gtaw_if_logged_in_shortcode');
 
 /**
  * Shortcode to conditionally display content for users not logged in with GTA:W
@@ -296,7 +275,6 @@ function gtaw_if_not_logged_in_shortcode($atts, $content = null) {
     
     return '';
 }
-add_shortcode('gtaw_if_not_logged_in', 'gtaw_if_not_logged_in_shortcode');
 
 /**
  * New shortcode to display a combined login/logout button
@@ -347,10 +325,9 @@ function gtaw_login_logout_shortcode($atts) {
         'icon' => $atts['icon']
     ]);
 }
-add_shortcode('gtaw_login_logout', 'gtaw_login_logout_shortcode');
 
 /**
- * Character information shortcode with enhanced styling options
+ * Character box shortcode (gtaw_character_details)
  * 
  * @param array $atts Shortcode attributes
  * @return string HTML output
@@ -425,7 +402,23 @@ function gtaw_character_info_enhanced_shortcode($atts) {
     
     return $output;
 }
-add_shortcode('gtaw_character_details', 'gtaw_character_info_enhanced_shortcode');
+
+/**
+ * Register OAuth shortcodes on init (block themes, late loading, and The Content).
+ */
+function gtaw_oauth_register_shortcodes() {
+    add_shortcode( 'gtaw_login', 'gtaw_login_shortcode' );
+    add_shortcode( 'gtaw_login_button', 'gtaw_login_button_shortcode' );
+    add_shortcode( 'gtaw_user_info', 'gtaw_user_info_shortcode' );
+    add_shortcode( 'gtaw_if_logged_in', 'gtaw_if_logged_in_shortcode' );
+    add_shortcode( 'gtaw_if_not_logged_in', 'gtaw_if_not_logged_in_shortcode' );
+    add_shortcode( 'gtaw_login_logout', 'gtaw_login_logout_shortcode' );
+    add_shortcode( 'gtaw_character_details', 'gtaw_character_info_enhanced_shortcode' );
+    if ( function_exists( 'gtaw_character_info_shortcode' ) ) {
+        add_shortcode( 'gtaw_character_info', 'gtaw_character_info_shortcode' );
+    }
+}
+add_action( 'init', 'gtaw_oauth_register_shortcodes', 5 );
 
 /**
  * Handle custom redirects from the login process
@@ -435,11 +428,11 @@ function gtaw_handle_custom_redirect() {
         return;
     }
     
-    $redirect_key = sanitize_text_field($_GET['gtaw_redirect_key']);
-    $redirect_url = get_transient('gtaw_redirect_' . $redirect_key);
+    $redirect_key = sanitize_text_field( wp_unslash( $_GET['gtaw_redirect_key'] ) );
+    $redirect_url = get_transient( $redirect_key );
     
     if (!empty($redirect_url)) {
-        delete_transient('gtaw_redirect_' . $redirect_key);
+        delete_transient( $redirect_key );
         
         // Validate URL is safe
         $redirect_url = wp_validate_redirect($redirect_url, home_url());

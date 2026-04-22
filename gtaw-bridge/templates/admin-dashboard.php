@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
                 <div class="gtaw-quick-info-content">
                     <h3>Getting Started</h3>
                     <ul>
-                        <li><a href="https://github.com/Botticena/gtaw-bridge/">Documentation</a></li>
+                        <li><a href="https://github.com/Botticena/GTAW-Bridge/">Documentation</a></li>
                         <li>Activate modules below</li>
                         <li>Configure each module</li>
                     </ul>
@@ -57,7 +57,7 @@ if (!defined('ABSPATH')) {
                 <div class="gtaw-quick-info-content">
                     <h3>About</h3>
                     <p>Created by <a href="https://forum.gta.world/en/profile/56418-lena/" target="_blank">Lena</a></p>
-                    <p>Need help? <a href="https://github.com/Botticena/gtaw-bridge/issues" target="_blank">GitHub Issues</a></p>
+                    <p>Need help? <a href="https://github.com/Botticena/GTAW-Bridge/issues" target="_blank">GitHub Issues</a></p>
                 </div>
             </div>
         </div>

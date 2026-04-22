@@ -1,21 +1,9 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD MODULE MAIN FILE ========= */
-/*
- * This file serves as the entry point for the Discord module.
- * It handles:
- * - Core settings registration
- * - Admin menu setup
- * - Tab navigation
- * - Loading all Discord submodules
- */
+// Discord hub — always loaded so shortcodes can noop when module off.
 
-/* ========= ADMIN SETTINGS ========= */
-
-// Register Discord core settings
 function gtaw_discord_register_settings() {
-    // Use the new utility function to register settings
     gtaw_register_settings_group('gtaw_discord_settings_group', [
         'gtaw_discord_enabled',
         'gtaw_discord_client_id',
@@ -168,7 +156,6 @@ function gtaw_discord_logs_tab() {
     echo gtaw_display_module_logs('discord', $logs_per_page, $page);
 }
 
-/* ========= LOAD DISCORD SUBMODULES ========= */
 
 // Define the submodules path 
 define('GTAW_DISCORD_PATH', plugin_dir_path(__FILE__) . 'discord/');
@@ -216,4 +203,26 @@ function gtaw_enqueue_discord_admin_assets($hook) {
     if (strpos($hook, 'gtaw-bridge_page_gtaw-discord') !== false) {
         wp_enqueue_style('gtaw-discord-styles', GTAW_BRIDGE_PLUGIN_URL . 'assets/css/gtaw-discord.css', array(), GTAW_BRIDGE_VERSION);
     }
+}
+
+/**
+ * When the Discord module is off, submodules (oauth.php) are not loaded — register a placeholder so
+ * [gtaw_discord_buttons] is not left as raw text in the editor output.
+ */
+add_action( 'init', 'gtaw_discord_maybe_register_shortcode_placeholder', 4 );
+function gtaw_discord_maybe_register_shortcode_placeholder() {
+    if ( function_exists( 'shortcode_exists' ) && shortcode_exists( 'gtaw_discord_buttons' ) ) {
+        return;
+    }
+    add_shortcode( 'gtaw_discord_buttons', 'gtaw_discord_shortcode_when_module_off' );
+}
+
+/**
+ * @return string
+ */
+function gtaw_discord_shortcode_when_module_off() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return '';
+    }
+    return '<p class="gtaw-discord-off">' . esc_html__( 'The Discord module is disabled. Enable it under GTA:W Bridge in the admin dashboard.', 'gtaw-bridge' ) . '</p>';
 }

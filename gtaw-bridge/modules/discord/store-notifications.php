@@ -1,29 +1,17 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD STORE NOTIFICATIONS MODULE ========= */
-/*
- * This module handles store owner notifications via Discord:
- * - New order notifications
- * - Customizable embeds
- * - Role mentions
- */
+// Shop admin: new order pings on Discord.
 
-/* ========= ADMIN SETTINGS ========= */
-
-// Register store notification settings
 function gtaw_discord_register_store_notify_settings() {
-    // Basic settings
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_enabled');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_channel');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_color');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_title');
-    
-    // Role mention settings
+
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_role_id');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_role_enabled');
-    
-    // Fields to include
+
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_customer');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_phone');
     register_setting('gtaw_discord_storenotify_group', 'gtaw_discord_storenotify_field_total');
@@ -231,7 +219,6 @@ add_filter('gtaw_discord_settings_tabs', function($tabs) {
     return $tabs;
 });
 
-/* ========= HELPER FUNCTIONS ========= */
 
 // Function to get clean street address
 function gtaw_get_street_address($order) {
@@ -297,7 +284,6 @@ function gtaw_get_shipping_method($order) {
     return !empty($shipping_method) ? $shipping_method : 'Local Pickup';
 }
 
-/* ========= NOTIFICATION SENDING ========= */
 
 // Main notification function
 function gtaw_discord_send_store_notification($order_id) {

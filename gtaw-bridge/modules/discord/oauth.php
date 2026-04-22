@@ -1,26 +1,13 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD OAUTH MODULE ========= */
-/*
- * This module handles Discord OAuth authentication:
- * - User account linking with secure state management
- * - OAuth callback processing with error handling
- * - Account status verification with retry mechanisms
- * - Simplified shortcodes and AJAX endpoints
- *
- * @version 2.0
- */
+// Link WP account to Discord, callback, shortcodes.
 
-/**
- * Discord OAuth settings and operation constants
- */
 define('GTAW_DISCORD_OAUTH_VERSION', '2.0');
 define('GTAW_DISCORD_OAUTH_STATE_EXPIRATION', 10 * MINUTE_IN_SECONDS);
 define('GTAW_DISCORD_AUTH_SCOPES', 'identify');
 define('GTAW_DISCORD_API_BASE', 'https://discord.com/api/v10');
 
-/* ========= INITIALIZATION ========= */
 
 /**
  * Register Discord OAuth endpoints and AJAX handlers
@@ -169,7 +156,6 @@ function gtaw_discord_endpoint_content() {
 }
 add_action('woocommerce_account_discord_endpoint', 'gtaw_discord_endpoint_content');
 
-/* ========= DISCORD OAUTH FLOW ========= */
 
 /**
  * Generate a secure OAuth state parameter and store it in user meta
@@ -248,12 +234,12 @@ function gtaw_get_discord_auth_url() {
         'response_type' => 'code',
         'scope' => GTAW_DISCORD_AUTH_SCOPES,
         'state' => $state,
-        'prompt' => 'consent' // Always show consent screen for better UX
+        'prompt' => 'consent' // otherwise discord can skip the picker
     ], 'https://discord.com/api/oauth2/authorize');
 }
 
 /**
- * Handle Discord OAuth callback with improved error handling
+ * OAuth redirect handler (Discord -> WP)
  */
 function gtaw_handle_discord_oauth_callback() {
     // Only process if this is our callback
@@ -261,7 +247,6 @@ function gtaw_handle_discord_oauth_callback() {
         return;
     }
     
-    // Start timing the process for performance monitoring
     $start_time = microtime(true);
     
     // Default redirect location
@@ -453,7 +438,6 @@ function gtaw_handle_discord_oauth_callback() {
 }
 add_action('init', 'gtaw_handle_discord_oauth_callback', 20); // Higher priority to run after other init hooks
 
-/* ========= AJAX ENDPOINTS ========= */
 
 /**
  * AJAX handler to unlink Discord account with proper security
@@ -578,7 +562,6 @@ function gtaw_check_discord_server_membership() {
     ]);
 }
 
-/* ========= SHORTCODES ========= */
 
 /**
  * Shortcode that displays either the link or unlink button

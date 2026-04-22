@@ -1,9 +1,8 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= OAUTH MODULE GUIDE ========= */
 /*
- * This file provides a comprehensive guide to the OAuth module's features
+ * In-admin help HTML for OAuth.
  * - Introduction and overview
  * - Setup instructions
  * - Feature documentation
@@ -22,7 +21,6 @@ function gtaw_oauth_guide_tab() {
                 <a href="#setup" class="nav-link" style="text-decoration: none; padding: 8px 12px; background: #f0f0f0; border-radius: 4px;">Setup</a>
                 <a href="#features" class="nav-link" style="text-decoration: none; padding: 8px 12px; background: #f0f0f0; border-radius: 4px;">Features</a>
                 <a href="#shortcodes" class="nav-link" style="text-decoration: none; padding: 8px 12px; background: #f0f0f0; border-radius: 4px;">Shortcodes</a>
-                <a href="#developers" class="nav-link" style="text-decoration: none; padding: 8px 12px; background: #f0f0f0; border-radius: 4px;">For Developers</a>
                 <a href="#troubleshooting" class="nav-link" style="text-decoration: none; padding: 8px 12px; background: #f0f0f0; border-radius: 4px;">Troubleshooting</a>
             </div>
         </div>
@@ -121,62 +119,16 @@ function gtaw_oauth_guide_tab() {
             <!-- Features Section -->
             <div id="features" class="content-section" style="display: none;">
                 <div class="section-header" style="background: #f9f9f9; padding: 15px; border-left: 4px solid #2271b1; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">Core Features</h2>
+                    <h2 style="margin: 0;">What you get</h2>
                 </div>
                 
                 <div class="section-content">
-                    <div class="feature-details">
-                        <h3>Single Sign-On Authentication</h3>
-                        <p>The OAuth module allows users to log in to your WordPress site using their existing GTA:W accounts, eliminating the need for separate credentials. The authentication flow works as follows:</p>
-                        <ol>
-                            <li>User clicks the login button on your site</li>
-                            <li>User is redirected to GTA:W's authentication page</li>
-                            <li>After successful authentication, the user is redirected back to your site</li>
-                            <li>If it's their first visit, they can select which character to use for registration</li>
-                            <li>For returning users, they can choose which character account to log in with</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="feature-details">
-                        <h3>Character-Based Account System</h3>
-                        <p>Each GTA:W character can have its own WordPress account on your site. This allows for character-specific content, permissions, and experiences:</p>
-                        <ul>
-                            <li>Users can create separate accounts for each of their GTA:W characters</li>
-                            <li>The system automatically recognizes which accounts belong to the same GTA:W user</li>
-                            <li>Character information is stored in user meta for easy access in your theme or plugins</li>
-                            <li>Users can switch between character accounts easily</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="feature-details">
-                        <h3>Modal Login Experience</h3>
-                        <p>When users return from GTA:W's authentication, they're presented with a modal dialog that offers options based on their account status:</p>
-                        <ul>
-                            <li><strong>First-time Users:</strong> Select which character to register with</li>
-                            <li><strong>Returning Users:</strong> Choose which existing character account to log in with, or create an account for a new character</li>
-                            <li>The modal provides a streamlined experience without page reloads</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="feature-details">
-                        <h3>WordPress Registration Override</h3>
-                        <p>The module can optionally disable standard WordPress registration, ensuring all users come through the GTA:W authentication flow:</p>
-                        <ul>
-                            <li>Redirects standard registration page to GTA:W login</li>
-                            <li>Adds GTA:W login option to the WordPress login page</li>
-                            <li>Creates a consistent authentication experience across your site</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="feature-details">
-                        <h3>WooCommerce Integration</h3>
-                        <p>If WooCommerce is installed, the OAuth module integrates with it for a seamless shopping experience:</p>
-                        <ul>
-                            <li>Adds character information to the My Account dashboard</li>
-                            <li>Links orders to specific GTA:W characters</li>
-                            <li>Allows for character-specific product access and permissions</li>
-                        </ul>
-                    </div>
+                    <p>Players log in with their GTA:W account, pick a character, and get a normal WordPress user for that character. They can have one site account per character and switch when you allow it.</p>
+                    <p>If you use WooCommerce, character info can show on My Account and orders can line up with who was shopping in-character.</p>
+                    <ul>
+                        <li>Login and registration go through GTA:W (no extra passwords for them to remember for your site)</li>
+                        <li>After they sign in on GTA:W, your site can show a small prompt to create or pick a character account</li>
+                    </ul>
                 </div>
             </div>
             
@@ -238,91 +190,6 @@ function gtaw_oauth_guide_tab() {
   Please login with GTA:W to continue.
   [gtaw_login_button]
 [/gtaw_if_not_logged_in]</pre>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- For Developers Section -->
-            <div id="developers" class="content-section" style="display: none;">
-                <div class="section-header" style="background: #f9f9f9; padding: 15px; border-left: 4px solid #2271b1; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">For Developers</h2>
-                </div>
-                
-                <div class="section-content">
-                    <p>This section provides information for developers who want to extend or customize the OAuth module's functionality.</p>
-                    
-                    <div class="developer-section">
-                        <h3>Available Actions and Filters</h3>
-                        <p>The OAuth module provides several action and filter hooks for extending its functionality:</p>
-                        
-                        <div class="hook-details" style="margin-top: 10px; border-left: 3px solid #0073aa; padding-left: 15px;">
-                            <h4><code>gtaw_oauth_process_started</code> Action</h4>
-                            <p>Triggered when a GTA:W user completes the OAuth authentication process.</p>
-                            <p><strong>Parameters:</strong> <code>$user_data</code> - Array of user data from GTA:W API</p>
-                            <p><strong>Example:</strong></p>
-                            <pre>add_action('gtaw_oauth_process_started', function($user_data) {
-    // Do something with the user data
-    $username = $user_data['user']['username'] ?? '';
-    error_log("GTA:W user $username authenticated");
-});</pre>
-                        </div>
-                        
-                        <div class="hook-details" style="margin-top: 10px; border-left: 3px solid #0073aa; padding-left: 15px;">
-                            <h4><code>gtaw_oauth_character_registered</code> Action</h4>
-                            <p>Triggered when a GTA:W character is registered as a WordPress user.</p>
-                            <p><strong>Parameters:</strong></p>
-                            <ul>
-                                <li><code>$user_id</code> - WordPress user ID</li>
-                                <li><code>$character_data</code> - Array of character data from GTA:W</li>
-                            </ul>
-                            <p><strong>Example:</strong></p>
-                            <pre>add_action('gtaw_oauth_character_registered', function($user_id, $character_data) {
-    // Assign a specific role based on character data
-    $user = new WP_User($user_id);
-    $user->set_role('subscriber');
-    
-    // Store additional character metadata
-    update_user_meta($user_id, 'character_registered_date', current_time('mysql'));
-}, 10, 2);</pre>
-                        </div>
-                    </div>
-                    
-                    <div class="developer-section">
-                        <h3>User Meta Fields</h3>
-                        <p>The OAuth module stores several user meta fields that you can use in your code:</p>
-                        <ul>
-                            <li><code>gtaw_user_id</code> - The GTA:W UCP user ID</li>
-                            <li><code>active_gtaw_character</code> - Array containing the active character's data:
-                                <ul>
-                                    <li><code>id</code> - Character ID</li>
-                                    <li><code>firstname</code> - Character's first name</li>
-                                    <li><code>lastname</code> - Character's last name</li>
-                                </ul>
-                            </li>
-                        </ul>
-                        <p><strong>Example:</strong></p>
-                        <pre>$user_id = get_current_user_id();
-$character = get_user_meta($user_id, 'active_gtaw_character', true);
-
-if ($character) {
-    echo "Hello, {$character['firstname']} {$character['lastname']}!";
-}</pre>
-                    </div>
-                    
-                    <div class="developer-section">
-                        <h3>Helper Functions</h3>
-                        <p>The module provides several helper functions for working with GTA:W data:</p>
-                        <ul>
-                            <li><code>gtaw_is_user_linked_to_gtaw($user_id)</code> - Check if a user is linked to a GTA:W account</li>
-                            <li><code>gtaw_get_oauth_url()</code> - Get the complete OAuth authorization URL</li>
-                            <li><code>gtaw_reset_gtaw_connection($user_id)</code> - Reset a user's GTA:W connection</li>
-                        </ul>
-                        <p><strong>Example:</strong></p>
-                        <pre>if (gtaw_is_user_linked_to_gtaw(get_current_user_id())) {
-    // User is linked to GTA:W
-    $login_url = gtaw_get_oauth_url();
-    echo "&lt;a href='$login_url'>Switch Character&lt;/a>";
-}</pre>
                     </div>
                 </div>
             </div>
@@ -396,7 +263,7 @@ if ($character) {
                     </div>
                     
                     <h3>Using the Logs</h3>
-                    <p>The OAuth module includes a comprehensive logging system to help diagnose issues:</p>
+                    <p>There&rsquo;s a Logs tab if you need to see what broke:</p>
                     <ul>
                         <li>Go to the "Logs" tab in the OAuth module settings</li>
                         <li>Look for error messages related to your issue</li>
@@ -407,7 +274,7 @@ if ($character) {
                     <h3>Getting Support</h3>
                     <p>If you continue to experience issues after trying the troubleshooting steps:</p>
                     <ul>
-                        <li>Check the GitHub repository: <a href="https://github.com/Botticena/gtaw-bridge/" target="_blank">https://github.com/Botticena/gtaw-bridge/</a></li>
+                        <li>Check the GitHub repository: <a href="https://github.com/Botticena/GTAW-Bridge/" target="_blank">https://github.com/Botticena/GTAW-Bridge/</a></li>
                         <li>Submit an issue with detailed information:
                             <ul>
                                 <li>Steps to reproduce the problem</li>

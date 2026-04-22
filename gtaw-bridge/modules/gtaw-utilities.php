@@ -1,21 +1,25 @@
 <?php
 defined('ABSPATH') or exit;
 
-/**
- * GTAW Bridge Enhanced Utility Functions
- * 
- * Comprehensive utility library for the GTAW Bridge plugin:
- * - UI generation helpers
- * - Asset management
- * - Data storage optimization
- * - API request framework
- * - Performance monitoring
- * - Security functions
- * 
- * Updated for v2.0 with database-backed logging support
- */
+// Shared admin UI bits, logs table UI, gtaw_api_request, perf + ajax helpers.
 
-/* ========= UI GENERATION ========= */
+/**
+ * Resolve a settings field value for forms (top-level or one-level array options).
+ *
+ * @param string     $name    Field name, e.g. my_option or my_option[subkey].
+ * @param mixed|null $default Fallback when the option or key is missing.
+ * @return mixed
+ */
+function gtaw_get_settings_form_field_value( $name, $default = null ) {
+    if ( preg_match( '/^([^\[]+)\[([^\]]+)\]$/', $name, $m ) ) {
+        $opt = get_option( $m[1], array() );
+        if ( is_array( $opt ) && array_key_exists( $m[2], $opt ) ) {
+            return $opt[ $m[2] ];
+        }
+        return $default;
+    }
+    return get_option( $name, $default );
+}
 
 /**
  * Generate tab navigation for module settings pages
@@ -62,10 +66,14 @@ function gtaw_generate_settings_form($group_name, $fields, $submit_text = 'Save 
                 <tr valign="top">
                     <th scope="row"><?php echo esc_html($field['label']); ?></th>
                     <td>
+                        <?php
+                        $def = isset( $field['default'] ) ? $field['default'] : ( 'checkbox' === ( $field['type'] ?? '' ) ? '0' : ( 'color' === ( $field['type'] ?? '' ) ? '#000000' : '' ) );
+                        $fv  = gtaw_get_settings_form_field_value( $field['name'], $def );
+                        ?>
                         <?php if ($field['type'] === 'text'): ?>
                             <input type="text" 
                                    name="<?php echo esc_attr($field['name']); ?>" 
-                                   value="<?php echo esc_attr(get_option($field['name'], $field['default'] ?? '')); ?>" 
+                                   value="<?php echo esc_attr( $fv ); ?>" 
                                    <?php echo isset($field['size']) ? 'size="' . esc_attr($field['size']) . '"' : ''; ?>
                                    <?php echo isset($field['readonly']) && $field['readonly'] ? 'readonly' : ''; ?> />
                         
@@ -73,13 +81,13 @@ function gtaw_generate_settings_form($group_name, $fields, $submit_text = 'Save 
                             <input type="checkbox" 
                                    name="<?php echo esc_attr($field['name']); ?>" 
                                    value="1" 
-                                   <?php checked(get_option($field['name'], $field['default'] ?? '0'), '1'); ?> />
+                                   <?php checked( $fv, '1' ); ?> />
                         
                         <?php elseif ($field['type'] === 'select'): ?>
                             <select name="<?php echo esc_attr($field['name']); ?>">
                                 <?php foreach ($field['options'] as $value => $label): ?>
                                     <option value="<?php echo esc_attr($value); ?>" 
-                                            <?php selected(get_option($field['name'], $field['default'] ?? ''), $value); ?>>
+                                            <?php selected( $fv, $value ); ?>>
                                         <?php echo esc_html($label); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -89,13 +97,13 @@ function gtaw_generate_settings_form($group_name, $fields, $submit_text = 'Save 
                             <textarea name="<?php echo esc_attr($field['name']); ?>" 
                                       rows="<?php echo isset($field['rows']) ? esc_attr($field['rows']) : '5'; ?>" 
                                       cols="<?php echo isset($field['cols']) ? esc_attr($field['cols']) : '50'; ?>"><?php 
-                                echo esc_textarea(get_option($field['name'], $field['default'] ?? '')); 
+                                echo esc_textarea( $fv ); 
                             ?></textarea>
                         
                         <?php elseif ($field['type'] === 'color'): ?>
                             <input type="color" 
                                    name="<?php echo esc_attr($field['name']); ?>" 
-                                   value="<?php echo esc_attr(get_option($field['name'], $field['default'] ?? '#000000')); ?>" />
+                                   value="<?php echo esc_attr( ( is_string( $fv ) && $fv !== '' ) ? $fv : ( is_string( $def ) && $def !== '' ? $def : '#000000' ) ); ?>" />
                         <?php endif; ?>
                         
                         <?php if (isset($field['description'])): ?>
@@ -113,7 +121,7 @@ function gtaw_generate_settings_form($group_name, $fields, $submit_text = 'Save 
 }
 
 /**
- * Display module logs in a consistent format with enhanced filtering
+ * Admin log table + export/clear
  * Updated to support both legacy option storage and new database storage
  *
  * @param string $module Module name (oauth, discord, fleeca)
@@ -204,7 +212,7 @@ function gtaw_display_module_logs($module, $limit = null, $page = 1) {
                 </form>
             </div>
             
-            <!-- Export button for enhanced logs -->
+            <!-- export -->
             <div class="alignright">
                 <button id="export-logs" class="button" data-module="<?php echo esc_attr($module); ?>">Export to CSV</button>
             </div>
@@ -486,7 +494,6 @@ function gtaw_section_header($title, $description = '') {
     return ob_get_clean();
 }
 
-/* ========= ASSET MANAGEMENT ========= */
 
 /**
  * Register and enqueue a script only when needed
@@ -593,7 +600,6 @@ function gtaw_get_asset_url($asset_path, $minified = true) {
     return GTAW_BRIDGE_PLUGIN_URL . $asset_path;
 }
 
-/* ========= DATABASE OPERATIONS ========= */
 
 /**
  * Register settings for a settings group
@@ -705,7 +711,6 @@ function gtaw_process_batch($items, $callback, $batch_size = 50) {
     return $results;
 }
 
-/* ========= API REQUEST FRAMEWORK ========= */
 
 /**
  * Make a generic API request with caching and error handling
@@ -822,7 +827,6 @@ function gtaw_batch_api_requests($requests, $concurrency = 3, $delay = 200) {
     return $results;
 }
 
-/* ========= PERFORMANCE MONITORING ========= */
 
 /**
  * Start timing a specific operation
@@ -888,7 +892,6 @@ function gtaw_memory_snapshot($label, $log = true) {
     return $memory;
 }
 
-/* ========= SECURITY FUNCTIONS ========= */
 
 /**
  * Validate and sanitize an array of data based on rules

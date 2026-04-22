@@ -1,27 +1,12 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD ROLE MAPPING MODULE ========= */
-/*
- * This module provides functionality to map Discord roles to WordPress roles
- * With optimizations for:
- * - Preventing infinite synchronization loops
- * - Rate limit protection with retry mechanisms
- * - Conflict resolution for role priorities
- * - Enhanced error recovery
- * - Performance improvements for large servers
- *
- * @version 2.0
- */
+// Maps Discord roles <-> WP roles, batch sync, AJAX admin UI.
 
-/**
- * Constants for role mapping module
- */
 define('GTAW_DISCORD_ROLE_MAPPING_VERSION', '2.0');
-define('GTAW_DISCORD_ROLE_SYNC_LOCK_DURATION', 10); // Reduced from 30 to 10 seconds
-define('GTAW_DISCORD_ROLE_SYNC_BATCH_SIZE', 25);    // Users per batch
+define('GTAW_DISCORD_ROLE_SYNC_LOCK_DURATION', 10);
+define('GTAW_DISCORD_ROLE_SYNC_BATCH_SIZE', 25);
 
-/* ========= ADMIN SETTINGS ========= */
 
 /**
  * Register role mapping settings
@@ -70,7 +55,6 @@ function gtaw_sanitize_role_mappings($input) {
     return $sanitized;
 }
 
-/* ========= SYNCHRONIZATION MANAGEMENT ========= */
 
 /**
  * Lock mechanism to prevent concurrent role syncs for the same user
@@ -140,7 +124,6 @@ function gtaw_check_sync_safety($user_id, $direction = 'any', $reset = false) {
     return true;
 }
 
-/* ========= ROLE SYNC FUNCTIONALITY (Discord → WordPress) ========= */
 
 /**
  * Synchronize a user's WordPress role based on their Discord roles
@@ -403,7 +386,6 @@ function gtaw_sync_user_discord_roles($user_id, $force = false) {
     return true;
 }
 
-/* ========= ROLE SYNC FUNCTIONALITY (WordPress → Discord) ========= */
 
 /**
  * Syncs Discord roles when a WordPress role changes
@@ -791,7 +773,6 @@ add_action('template_redirect', 'gtaw_force_discord_role_sync_on_page_load', 20)
 // Add this hook with higher priority (9) to run before the regular sync
 add_action('gtaw_discord_account_linked', 'gtaw_sync_roles_on_discord_link_for_new_users', 9, 2);
 
-/* ========= SCHEDULING & HOOKS ========= */
 
 /**
  * Register background syncing schedule
@@ -832,14 +813,6 @@ function gtaw_add_custom_cron_schedules($schedules) {
     return $schedules;
 }
 add_filter('cron_schedules', 'gtaw_add_custom_cron_schedules');
-
-/**
- * Clear scheduled events on deactivation
- */
-function gtaw_clear_discord_role_sync_schedule() {
-    wp_clear_scheduled_hook('gtaw_discord_role_sync_event');
-}
-register_deactivation_hook(plugin_basename(GTAW_DISCORD_PATH . '../gtaw-discord.php'), 'gtaw_clear_discord_role_sync_schedule');
 
 /**
  * Hook for when a user connects their Discord account
@@ -967,7 +940,6 @@ function gtaw_run_scheduled_role_sync() {
 }
 add_action('gtaw_discord_role_sync_event', 'gtaw_run_scheduled_role_sync');
 
-/* ========= AJAX ENDPOINTS ========= */
 
 /**
  * AJAX endpoint for manual role sync with progress tracking
@@ -1234,7 +1206,6 @@ function gtaw_ajax_sync_user_discord_roles() {
 }
 add_action('wp_ajax_gtaw_sync_user_discord_roles', 'gtaw_ajax_sync_user_discord_roles');
 
-/* ========= ADMIN UI ========= */
 
 /**
  * Register tab in the Discord settings

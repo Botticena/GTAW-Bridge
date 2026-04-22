@@ -1,17 +1,7 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD CORE FUNCTIONALITY ========= */
-/*
- * This file contains core Discord functionality that is shared across submodules:
- * - API communication utilities with intelligent rate limiting
- * - Advanced caching with optimized durations
- * - Common helper functions with error recovery
- * - Performance monitoring for API requests
- * - Shared hooks and filters
- *
- * @version 2.0
- */
+// Discord REST wrapper + caching. Nothing fancy.
 
 /**
  * Cache durations for different Discord data types (in seconds)
@@ -197,7 +187,7 @@ class GTAW_Discord_API {
 }
 
 /**
- * Make a request to Discord API with enhanced error handling and caching
+ * Discord HTTP (rate limit + transient cache)
  *
  * @param string $endpoint The API endpoint (without leading slash)
  * @param array $args Request arguments (@see wp_remote_request)
@@ -206,7 +196,6 @@ class GTAW_Discord_API {
  * @return array|WP_Error Response or error
  */
 function gtaw_discord_api_request($endpoint, $args = [], $method = 'GET', $retry_count = 0) {
-    // Start timing the request for performance monitoring
     $start_time = microtime(true);
     
     // Get API instance for rate limiting and tracking
@@ -367,7 +356,6 @@ function gtaw_discord_api_request($endpoint, $args = [], $method = 'GET', $retry
         );
     }
     
-    // Log successful request with timing for performance monitoring
     if (defined('WP_DEBUG') && WP_DEBUG) {
         gtaw_add_log('discord', 'API Request', sprintf(
             "Discord API request successful (%.2fs): %s",
@@ -742,7 +730,7 @@ function gtaw_clear_all_discord_caches($type = 'all') {
 }
 
 /**
- * Send a Discord message to a channel with enhanced error handling
+ * POST a message to a channel
  *
  * @param string $channel_id The channel ID to send to
  * @param string $content The message content

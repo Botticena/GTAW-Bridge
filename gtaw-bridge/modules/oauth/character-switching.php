@@ -1,11 +1,7 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= MULTIPLE CHARACTER SWITCHING MODULE ========= */
-/*
- * This module adds the ability to switch between GTA:W characters
- * Each character has its own WordPress account
- */
+// In-account character switcher (separate WP user per char).
 
 /**
  * Store all available characters when a user first authenticates
@@ -435,7 +431,7 @@ function gtaw_process_admin_bar_character_switch() {
     // Store these in a cookie for the redirect
     setcookie('gtaw_switch_character_name', $character_firstname . ' ' . $character_lastname, time() + 300, COOKIEPATH, COOKIE_DOMAIN);
     
-    // Calculate return URL without the character switch parameters
+    // Calculate Redirect URL without the character switch parameters
     $return_url = remove_query_arg(array(
         'gtaw_switch_character', 
         'character_id', 

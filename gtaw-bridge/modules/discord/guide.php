@@ -1,9 +1,8 @@
 <?php
 defined('ABSPATH') or exit;
 
-/* ========= DISCORD MODULE GUIDE ========= */
 /*
- * This file provides a comprehensive guide to the Discord module's features
+ * In-admin help HTML for Discord.
  * - Introduction and overview
  * - Setup instructions
  * - Feature documentation
@@ -45,7 +44,7 @@ function gtaw_discord_guide_tab() {
                 </div>
                 
                 <div class="section-content" style="margin-bottom: 30px;">
-                    <p>The GTAW Bridge Discord Module provides comprehensive integration between your WordPress site and Discord server, enhancing community engagement and administration.</p>
+                    <p>Connect your site to Discord: link members’ accounts, post order updates, send store alerts, and optionally sync roles.</p>
                     
                     <div class="feature-box" style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin-top: 20px;">
                         <h3>Key Features</h3>
@@ -152,45 +151,9 @@ function gtaw_discord_guide_tab() {
                 </div>
                 
                 <div class="section-content">
-                    <p>The account linking feature allows your users to connect their Discord accounts with their existing GTAW WordPress accounts.</p>
-                    
-                    <h3>Key Benefits</h3>
-                    <ul>
-                        <li>Enables Discord channel notifications for order updates</li>
-                        <li>Allows role synchronization between platforms</li>
-                        <li>Verifies that users are members of your Discord server</li>
-                        <li>Creates stronger community integration</li>
-                    </ul>
-                    
-                    <h3>User Account Linking</h3>
-                    <p>Users can link their Discord accounts through:</p>
-                    <ul>
-                        <li>The "Discord Settings" page in their WooCommerce account dashboard</li>
-                        <li>During checkout if Discord notifications are enabled</li>
-                        <li>Any page where you add the <code>[gtaw_discord_buttons]</code> shortcode</li>
-                    </ul>
-                    
-                    <h3>How Account Linking Works</h3>
-                    <p>The account linking flow works as follows:</p>
-                    <ol>
-                        <li>User has already registered/logged in via the GTAW OAuth system</li>
-                        <li>User initiates the Discord connection</li>
-                        <li>They're redirected to Discord's authorization page</li>
-                        <li>After authorizing, Discord redirects back to your site with a code</li>
-                        <li>The plugin exchanges this code for an access token</li>
-                        <li>User's Discord ID is stored and linked to their existing WordPress account</li>
-                        <li>Role mapping and notifications are enabled for this user</li>
-                    </ol>
-                    
-                    <div class="best-practices" style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin-top: 20px;">
-                        <h3>Best Practices</h3>
-                        <ul>
-                            <li>Add the Discord linking button to relevant user account pages</li>
-                            <li>Encourage users to link their accounts for a better experience</li>
-                            <li>Consider making Discord linking mandatory for customer support reasons</li>
-                            <li>Explain the benefits of linking accounts to your users</li>
-                        </ul>
-                    </div>
+                    <p>After someone has a GTA:W account on your site, they can connect Discord so you can @ them, send order updates, and (if you use it) match Discord roles to WordPress roles.</p>
+                    <p><strong>Where they connect:</strong> WooCommerce → My account → Discord, at checkout (if you turn that on), or any page with the <code>[gtaw_discord_buttons]</code> shortcode.</p>
+                    <p>They click to link, approve in Discord, and return — that’s it.</p>
                 </div>
             </div>
             
@@ -201,45 +164,9 @@ function gtaw_discord_guide_tab() {
                 </div>
                 
                 <div class="section-content">
-                    <p>The order notifications feature allows you to send order updates to your customers via a designated Discord channel.</p>
-                    
-                    <h3>Setting Up Order Notifications</h3>
-                    <ol>
-                        <li>Go to the "Customer Notifications" tab</li>
-                        <li>Enter the Discord Channel ID where notifications will be sent</li>
-                        <li>Optionally enable "Require Discord Membership" to make Discord notifications mandatory for checkout</li>
-                        <li>Customize notification templates for different order statuses</li>
-                    </ol>
-                    
-                    <h3>Available Shortcodes</h3>
-                    <p>You can use these shortcodes in your notification templates:</p>
-                    <ul>
-                        <li><code>[order_id]</code> - The order number</li>
-                        <li><code>[order_date]</code> - The date and time when the order was placed</li>
-                        <li><code>[customer_name]</code> - Customer's full name</li>
-                        <li><code>[total]</code> - Order total amount</li>
-                        <li><code>[payment_method]</code> - Payment method used</li>
-                        <li><code>[shipping_method]</code> - Shipping method selected</li>
-                        <li><code>[discord_mention]</code> - Discord @mention for the customer</li>
-                    </ul>
-                    
-                    <h3>Notification Flow</h3>
-                    <ol>
-                        <li>Customer places an order and opts in for Discord notifications</li>
-                        <li>When order status changes, the system generates a notification</li>
-                        <li>If the notification is enabled for that status, it's sent to the designated Discord channel</li>
-                        <li>The notification will include a mention of the customer if they've linked their Discord account</li>
-                    </ol>
-                    
-                    <div class="note" style="background: #fff8e5; padding: 15px; border-left: 4px solid #ffb900; margin-top: 20px;">
-                        <h4>Important Note</h4>
-                        <p>For customers to be mentioned in notifications, they must:</p>
-                        <ul>
-                            <li>Have their Discord account linked to your site</li>
-                            <li>Be a member of your Discord server</li>
-                            <li>Have opted in to receive Discord notifications for their order</li>
-                        </ul>
-                    </div>
+                    <p>Send order news to a Discord channel your players can see. Configure it under <strong>Customer Notifications</strong> (channel ID, templates, which statuses to announce).</p>
+                    <p>In templates you can use placeholders like <code>[order_id]</code>, <code>[customer_name]</code>, <code>[total]</code>, <code>[discord_mention]</code>, and more — they are listed on that screen.</p>
+                    <p><strong>Tip:</strong> To @ someone, they must have linked Discord and be in your server.</p>
                     
                     <h3>Channel Setup</h3>
                     <p>Consider these tips when setting up your notification channel:</p>
@@ -455,7 +382,7 @@ function gtaw_discord_guide_tab() {
                     <h3>Getting Support</h3>
                     <p>If you continue experiencing issues:</p>
                     <ul>
-                        <li>Check the GitHub repository: <a href="https://github.com/Botticena/gtaw-bridge/" target="_blank">https://github.com/Botticena/gtaw-bridge/</a></li>
+                        <li>Check the GitHub repository: <a href="https://github.com/Botticena/GTAW-Bridge/" target="_blank">https://github.com/Botticena/GTAW-Bridge/</a></li>
                         <li>Open an issue with detailed steps to reproduce</li>
                         <li>Include relevant log entries</li>
                         <li>Specify your WordPress and WooCommerce versions</li>
